@@ -1,0 +1,37 @@
+Date,Description,Paid By,Split Type,Split Details,Amount,Currency,Group
+2024-03-01,Groceries - Weekly,Aisha,equal,"Aisha,Rohan,Priya,Meera",2400,INR,Flat 4B
+2024-03-03,Electricity Bill,Rohan,equal,"Aisha,Rohan,Priya,Meera",3200,INR,Flat 4B
+03/05/2024,Internet Bill,Priya,equal,"Aisha,Rohan,Priya,Meera",1500,INR,Flat 4B
+2024-03-07,Dinner at Olive Garden,Aisha,exact,"Aisha:400,Rohan:600,Priya:350,Meera:450",1800,INR,Flat 4B
+2024-03-10,House Cleaning Supplies,Meera,percentage,"Aisha:30,Rohan:30,Priya:20,Meera:20",1200,INR,Flat 4B
+2024-03-10,House Cleaning Supplies,Meera,percentage,"Aisha:30,Rohan:30,Priya:20,Meera:20",1200,INR,Flat 4B
+2024-03-12,Taxi to Airport,Rohan,equal,"Rohan,Priya",850,INR,Flat 4B
+2024-03-15,Netflix Subscription,Priya,equal,"Aisha,Rohan,Priya,Meera",649,USD,Flat 4B
+2024-03-18,Water Filter Repair, Aisha ,equal,"Aisha,Rohan,Priya,Meera",2200,INR,Flat 4B
+2024-3-20,Groceries - Weekly,Rohan,equal,"Aisha,Rohan,Priya,Meera",-1800,INR,Flat 4B
+2024-03-22,Birthday Party Decorations,Meera,percentage,"Aisha:25,Rohan:25,Priya:25,Meera:30",3500,INR,Flat 4B
+2024-03-25,Pest Control Service,Aisha,equal,"Aisha,Rohan,Priya,Meera,Sam",4000,INR,Flat 4B
+04-01-2024,Groceries - April Week 1,Rohan,equal,"Aisha,Rohan,Priya,Meera,Sam",2800,INR,Flat 4B
+2024-04-05,Plumber Visit,samuel,exact,"Aisha:0,Rohan:500,Priya:500,Sam:500,Meera:500",2000,INR,Flat 4B
+2024-04-08,Gas Cylinder Refill,Aisha,equal,"Aisha,Rohan,Priya,Meera,Sam",1100,INR,Flat 4B
+2024-04-10,Weekend Brunch,Priya,exact,"Aisha:300,Rohan:450,Priya:400,Sam:350,Meera:500",2000,INR,Flat 4B
+2024-04-12,Gym Membership - Shared,Meera,equal,"Rohan,Meera",6000,INR,Flat 4B
+2024-04-15,Amazon Prime Annual,Rohan,equal,"Aisha,Rohan,Priya,Sam,Meera",1499,USD,Flat 4B
+2024-04-18,Curtains for Living Room,Aisha,equal,"Aisha,Rohan,Priya,Sam,Meera",8500,INR,Flat 4B
+2024-04-20,Groceries - April Week 3,,equal,"Aisha,Rohan,Priya,Sam,Meera",3200,INR,Flat 4B
+2024-04-22,Dinner - Thai Place,Sam,percentage,"Aisha:20,Rohan:20,Priya:20,Sam:20,Meera:20",4200,INR,Flat 4B
+2024-04-25,Wifi Router Upgrade,Priya,equal,"Aisha,Rohan,Priya,Sam,Meera",0,INR,Flat 4B
+2024-04-28,Monthly Maid Payment,Aisha,equal,"Aisha,Rohan,Priya,Sam,Meera",5000,INR,Flat 4B
+2024-05-01,Groceries - May Week 1,Rohan,equal,"Aisha,Rohan,Priya,Sam,Meera",2600,INR,Flat 4B
+2024-05-05,Uber to IKEA,Sam,equal,"Sam,Meera,Priya",720,INR,Flat 4B
+2024-05-08,Water Purifier Service,Meera,equal,"Aisha,Rohan,Priya,Sam,Meera",1800,INR,Flat 4B
+2024-05-10,Spotify Family Plan,Priya,equal,"Aisha,Rohan,Priya,Sam,Meera",179,Rs,Flat 4B
+2024-05-12,Balcony Plants,Aisha,exact,"Aisha:600,Rohan:400,Priya:400,Sam:400,Meera:400",2200,INR,Flat 4B
+2024-05-15,Dinner - Sushi Night,Rohan,exact,"Aisha:800,Rohan:900,Priya:750,Sam:850,Meera:800",4200,INR,Flat 4B
+2024-05-15,Dinner - Sushi Night,Rohan,exact,"Aisha:800,Rohan:900,Priya:750,Sam:850,Meera:800",4200,INR,Flat 4B
+2024-05-18,AC Servicing,Sam,equal,"Aisha,Rohan,Priya,Sam,Meera",3500,INR,Flat 4B
+2024-05-20,Groceries - May Week 3,Meera,equal,"Aisha,Rohan,Priya,Sam,Meera",2900,INR,Flat 4B
+2024-05-22,Gift for Landlord,Aisha,percentage,"Aisha:20,Rohan:20,Priya:20,Sam:20,Meera:20",2500,INR,Flat 4B
+2024-05-25,Electrician Visit,Priya,equal,"Aisha,Rohan,Priya,Sam,Meera",1500,INR,Flat 4B
+2024-05-28,Movie Night Snacks,Sam,equal,"Aisha,Rohan,Priya,Sam,Meera",800,INR,Flat 4B
+2026-12-31,Future Party Supplies,Rohan,equal,"Aisha,Rohan,Priya,Sam,Meera",5000,INR,Flat 4B
