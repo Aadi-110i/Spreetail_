@@ -72,106 +72,50 @@ export default function Home() {
       </section>
 
       {/* Platform Capabilities Showcase */}
-      <section style={{ borderTop: '1px solid var(--border)' }}>
-        <div style={{ padding: '8rem 3rem', textAlign: 'center', borderBottom: '1px solid var(--border)' }}>
-          <h2 className="slide-up" style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)' }}>Engineered for Precision</h2>
-          <p className="slide-up" style={{ maxWidth: '600px', margin: '1.5rem auto 0', color: 'var(--grey)' }}>
-            Beneath the minimalist interface lies a powerful, mathematically rigorous backend designed to handle edge cases effortlessly.
+      <section style={{ borderTop: '1px solid var(--border)', padding: '6rem 3rem' }}>
+        <h2 className="slide-up" style={{ marginBottom: '4rem', textAlign: 'center' }}>Platform Capabilities</h2>
+
+        <div className="grid-3 stagger" style={{ marginTop: '2rem' }}>
+          <div className="card slide-up" style={{ padding: '3rem 2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Debt Simplification</h3>
+            <p style={{ color: 'var(--grey)', lineHeight: '1.6' }}>
+              Say goodbye to the chaotic web of micro-transactions. Our greedy settlement algorithm calculates net balances and mathematically minimizes the total number of payments required. A "Who Owes Whom" summary that actually makes sense.
+            </p>
+          </div>
+
+          <div className="card slide-up" style={{ padding: '3rem 2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Temporal Membership</h3>
+            <p style={{ color: 'var(--grey)', lineHeight: '1.6' }}>
+              New flatmate moved in? Our temporal database schema tracks exact join and leave dates. The system actively cross-references expense dates to ensure members are never unfairly billed for historical group expenses.
+            </p>
+          </div>
+
+          <div className="card slide-up" style={{ padding: '3rem 2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Interactive Staging Area</h3>
+            <p style={{ color: 'var(--grey)', lineHeight: '1.6' }}>
+              Upload your raw CSV and let our parsing engine do the work. It detects 12+ anomalies—from duplicates and negative amounts to bad dates—and places them in a beautiful Staging Area for your explicit approval before committing to the database.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section style={{ padding: '8rem 3rem', borderTop: '1px solid var(--border)', textAlign: 'center', background: 'var(--black-soft)' }}>
+        <div className="container" style={{ maxWidth: '800px' }}>
+          <span className="slide-up" style={{ color: 'var(--grey)', textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.75rem', display: 'block', marginBottom: '1.5rem' }}>Ready to simplify?</span>
+          <h2 className="slide-up" style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginBottom: '2rem', lineHeight: '1.1', letterSpacing: '-0.02em' }}>
+            Stop arguing about money.<br />Start living your life.
+          </h2>
+          <p className="slide-up" style={{ color: 'var(--grey-light)', fontSize: '1.1rem', marginBottom: '3rem', maxWidth: '500px', margin: '0 auto 3rem' }}>
+            Join Premium Split today and let our algorithmic engine handle the awkward math for you.
           </p>
-        </div>
-
-        {/* Feature 1 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', borderBottom: '1px solid var(--border)' }}>
-          <div className="slide-up" style={{ padding: '6rem 4rem', borderRight: '1px solid var(--border)' }}>
-            <span style={{ color: 'var(--grey)', textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.75rem' }}>01 / Algorithmic Efficiency</span>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', color: 'var(--cream)', textTransform: 'none', margin: '1rem 0 1.5rem', letterSpacing: '-0.02em' }}>Debt Simplification</h3>
-            <p style={{ color: 'var(--grey-light)', lineHeight: '1.8', fontSize: '1.05rem' }}>
-              Say goodbye to the chaotic web of micro-transactions. We implemented a highly optimized Greedy Settlement Algorithm that first calculates absolute net balances, then iteratively matches the maximum debtor to the maximum creditor. The result? The mathematical minimum number of required transactions.
-            </p>
-          </div>
-          <div className="slide-up" style={{ padding: '6rem 4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black-soft)' }}>
-            <div style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', background: 'var(--black)', width: '100%', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '2px', height: '100%', background: 'var(--cream)' }}></div>
-              <pre style={{ color: 'var(--grey)', fontSize: '0.8rem', fontFamily: 'monospace', lineHeight: '1.6', overflowX: 'auto' }}>
-{`function simplifyDebts(balances) {
-  const transactions = [];
-  while (true) {
-    const maxDebtor = getMin(balances);
-    const maxCreditor = getMax(balances);
-    
-    if (balances[maxDebtor] === 0) break;
-    
-    const amount = Math.min(
-      -balances[maxDebtor], 
-       balances[maxCreditor]
-    );
-    // Execute minimal transaction
-    transactions.push({ 
-      from: maxDebtor, to: maxCreditor, amount 
-    });
-  }
-}`}
-              </pre>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature 2 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', borderBottom: '1px solid var(--border)' }}>
-          <div className="slide-up" style={{ padding: '6rem 4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black-soft)', order: -1 }}>
-            <div style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', background: 'var(--black)', width: '100%', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '1px', background: 'var(--red-soft)', opacity: 0.5 }}></div>
-              <pre style={{ color: 'var(--grey)', fontSize: '0.8rem', fontFamily: 'monospace', lineHeight: '1.6', overflowX: 'auto' }}>
-{`[ERROR] Row 12: Invalid Allocation
-- Issue: Percentages provided 
-  (A:25, R:25, P:25, M:30) total 105%.
-- Action: Mathematical invariant failed. 
-  Row blocked in staging area.
-
-[ERROR] Row 13: Temporal Paradox
-- Issue: "Sam" included in expense 
-  dated 03-25, joined on 04-01.
-- Action: Import blocked.`}
-              </pre>
-            </div>
-          </div>
-          <div className="slide-up" style={{ padding: '6rem 4rem', borderLeft: '1px solid var(--border)' }}>
-            <span style={{ color: 'var(--grey)', textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.75rem' }}>02 / Data Integrity</span>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', color: 'var(--cream)', textTransform: 'none', margin: '1rem 0 1.5rem', letterSpacing: '-0.02em' }}>Interactive Staging Area</h3>
-            <p style={{ color: 'var(--grey-light)', lineHeight: '1.8', fontSize: '1.05rem' }}>
-              We never fail silently, and we never guess. Upload your raw CSV and let our custom parsing engine detect over 12 anomalies—from mathematical impossibilities to duplicate records. Faulty data is quarantined in a beautiful Staging Area for your explicit approval before committing to the database.
-            </p>
-          </div>
-        </div>
-
-        {/* Feature 3 */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))' }}>
-          <div className="slide-up" style={{ padding: '6rem 4rem', borderRight: '1px solid var(--border)' }}>
-            <span style={{ color: 'var(--grey)', textTransform: 'uppercase', letterSpacing: '0.15em', fontSize: '0.75rem' }}>03 / Advanced Architecture</span>
-            <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', color: 'var(--cream)', textTransform: 'none', margin: '1rem 0 1.5rem', letterSpacing: '-0.02em' }}>Temporal Membership</h3>
-            <p style={{ color: 'var(--grey-light)', lineHeight: '1.8', fontSize: '1.05rem' }}>
-              When new flatmates move in, things usually get complicated. Our normalized database schema tracks exact <code>joinedAt</code> and <code>leftAt</code> timestamps. The ingestion engine actively cross-references expense dates against temporal records to guarantee members are never unfairly billed for historical group expenses.
-            </p>
-          </div>
-          <div className="slide-up" style={{ padding: '6rem 4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--black-soft)' }}>
-            <div style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', background: 'var(--black)', width: '100%', position: 'relative' }}>
-              <pre style={{ color: 'var(--grey)', fontSize: '0.8rem', fontFamily: 'monospace', lineHeight: '1.6', overflowX: 'auto' }}>
-{`model GroupMember {
-  id        String    @id @default(uuid())
-  groupId   String
-  userId    String
-  
-  // Temporal Tracking Logic
-  joinedAt  DateTime  @default(now())
-  leftAt    DateTime?
-  
-  group     Group     @relation(...)
-  user      User      @relation(...)
-  
-  @@unique([groupId, userId])
-}`}
-              </pre>
-            </div>
+          <div className="flex gap-2 slide-up" style={{ justifyContent: 'center' }}>
+            <Link href="/login" className="btn btn-filled" style={{ padding: '1.25rem 3rem', fontSize: '0.85rem' }}>
+              <span>Enter Application</span>
+            </Link>
+            <Link href="/import" className="btn" style={{ padding: '1.25rem 3rem', fontSize: '0.85rem' }}>
+              <span>Test CSV Engine</span>
+            </Link>
           </div>
         </div>
       </section>
