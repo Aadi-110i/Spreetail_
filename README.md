@@ -1,82 +1,56 @@
-# Premium Split — Shared Expenses App
+# 💎 Premium Split
 
-A beautiful, full-featured shared expenses management application built with Next.js, Prisma, and SQLite. Designed for flatmates to track, split, and settle shared expenses with multi-currency support and intelligent CSV data import with anomaly detection.
+> Shared expenses, simplified. Elegant tracking for modern flatmates.
 
-## ✨ Features
+Premium Split is a high-fidelity expense management platform built with Next.js and Prisma. It combines intelligent data ingestion with a refined glassmorphism interface to make financial transparency effortless.
 
-- **User Management** — Login/signup, group creation, temporal membership tracking
-- **Expense Management** — Equal, percentage, and exact split types with multi-currency (INR/USD)
-- **Balance Engine** — Real-time who-owes-whom calculations with debt simplification
-- **CSV Importer** — Drag-and-drop CSV upload with 12+ anomaly detection rules
-- **Approval Workflow** — Review and approve/reject each anomaly before data import
-- **Settlement Recording** — Track payments between members
-- **Import Reports** — Automated summary of all detected issues and actions taken
+## 🤖 AI Collaboration
+
+This project was developed in collaboration with **Antigravity (Gemini)**, an AI pair programming assistant. AI was used for architectural scaffolding, complex logic implementation (anomaly detection engine), and drafting the design system.
 
 ## 🚀 Setup Instructions
 
 ### Prerequisites
-
 - Node.js v18+
 - npm
 
-### Installation
-
+### Installation & Launch
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone <repo-url>
 cd spreetailassignment
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Initialize the database
+# 3. Initialize the database (SQLite)
+# This will create the local dev.db file and generate the Prisma client
 npx prisma db push
 npx prisma generate
 
-# Start the development server
+# 4. Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Visit `http://localhost:3000` to begin.
 
 ### Environment Variables
-
-Create a `.env` file in the root:
-
+Create a `.env` file in the root if it doesn't exist:
 ```
 DATABASE_URL="file:./dev.db"
 ```
 
-## 🏗️ Tech Stack
+## ✨ Core Experience
+- **Intelligent Import** — Advanced CSV parser with 12+ automated anomaly detection rules.
+- **Dynamic Balances** — Real-time debt simplification using optimized greedy algorithms.
+- **Temporal Logic** — Precise membership tracking ensures users only pay for what they owe.
+- **Multi-Currency** — Native support for INR and USD with intelligent conversion.
 
-| Technology | Purpose |
-|---|---|
-| Next.js 16 (App Router) | Full-stack React framework |
-| TypeScript | Type safety |
-| Prisma + SQLite | ORM + Relational database |
-| Vanilla CSS | Premium glassmorphism design system |
-| Server Actions | Backend API layer |
+## 🛠️ Tech Stack
+- **Framework** — Next.js 16 (App Router)
+- **Database** — Prisma + SQLite
+- **Styling** — Vanilla CSS (Custom Design System)
+- **Language** — TypeScript
 
-## 📁 Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── page.tsx           # Landing page
-│   ├── login/             # Authentication
-│   ├── dashboard/         # Authenticated dashboard
-│   │   ├── groups/        # Group management
-│   │   └── balances/      # Balance overview
-│   └── import/            # CSV importer
-├── actions/               # Server actions
-│   ├── auth.ts           # Login/signup
-│   ├── groups.ts         # Group CRUD
-│   ├── expenses.ts       # Expense CRUD
-│   └── import.ts         # CSV import
-└── lib/                   # Shared utilities
-    ├── auth.ts           # Session management
-    ├── prisma.ts         # DB client
-    ├── csv-parser.ts     # Anomaly detection engine
-    ├── balance-engine.ts # Balance calculations
-    └── currency.ts       # Currency conversion
-```
+---
+Built for excellence. Focused on simplicity.

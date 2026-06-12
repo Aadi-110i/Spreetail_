@@ -1,37 +1,40 @@
-# DECISIONS.md — Technical & Product Decisions
+# 🏛️ Technical Decisions
 
-## 1. Framework: Next.js 16 with App Router
-**Decision**: Use Next.js with the App Router pattern over alternatives like Vite + Express.
-**Rationale**: Server Components, Server Actions, and file-based routing give us a full-stack app with minimal boilerplate. The App Router allows server-side rendering for data-heavy pages like the dashboard while keeping interactive components (CSV importer) as client components.
+The architectural blueprint and rationale behind **Premium Split**.
 
-## 2. Database: SQLite via Prisma ORM
-**Decision**: Use SQLite instead of PostgreSQL for the relational database requirement.
-**Rationale**: SQLite requires zero setup, no separate server, and is file-based — perfect for rapid development and easy deployment. Prisma provides type-safe queries and simple schema migrations. The data volume (flatmate expenses) doesn't warrant a full RDBMS.
+## 🎨 Frontend & Design
 
-## 3. Authentication: Cookie-based sessions
-**Decision**: Implement simple cookie-based auth instead of NextAuth/Auth.js.
-**Rationale**: The app requires a login module, not enterprise auth. A simple cookie-based session with server-side validation keeps the code lean and avoids unnecessary complexity. Users can sign up with just name + email.
+### Next.js 16 (App Router)
+- **Options considered**: Vite + Express, Remix, Next.js Pages Router.
+- **Why chosen**: Leveraging Server Components and Actions to minimize client-side JavaScript. The App Router provides the best balance for a full-stack dashboard with minimal boilerplate.
 
-## 4. CSS: Vanilla CSS with design system
-**Decision**: Use Vanilla CSS with CSS variables over Tailwind CSS.
-**Rationale**: Full control over the design system, no build-time dependencies, and allows for advanced effects like glassmorphism, radial gradients, and micro-animations that would be verbose with utility classes.
+### Vanilla CSS Design System
+- **Options considered**: Tailwind CSS, Styled Components, Bootstrap.
+- **Why chosen**: To maintain complete control over the "Premium" aesthetic (glassmorphism, micro-interactions) without being constrained by utility class verbosity or runtime CSS-in-JS overhead.
 
-## 5. CSV Parser: Client-side detection, Server-side commit
-**Decision**: Parse CSV and detect anomalies server-side, but present the interactive review UI client-side.
-**Rationale**: The review/approval workflow (Meera's requirement) requires interactive state management (approve/reject buttons). Parsing happens via a server action, then results are rendered in a client component for the approval flow.
+## 💾 Data & Infrastructure
 
-## 6. Currency handling
-**Decision**: Store amounts in original currency, convert to INR for balance calculations.
-**Rationale**: Preserving the original currency and amount avoids precision loss. The balance engine converts to INR using a fixed rate (83.50 INR/USD) for calculations. This addresses Priya's requirement for proper currency conversion.
+### SQLite with Prisma
+- **Options considered**: PostgreSQL, MongoDB, LocalStorage.
+- **Why chosen**: SQLite is zero-infrastructure and file-based, making it ideal for assignment delivery. Prisma provides the relational integrity required for financial splitting logic.
 
-## 7. Temporal membership
-**Decision**: GroupMember table tracks `joinedAt` and `leftAt` timestamps.
-**Rationale**: Sam's requirement — members shouldn't be charged for expenses before they joined. The CSV parser checks expense dates against member join dates and flags violations.
+### Temporal Membership Tracking
+- **Options considered**: Snapshot splitting, simple boolean active flag.
+- **Why chosen**: Tracking `joinedAt` and `leftAt` ensures mathematical fairness. Users are only eligible for splits on transactions occurring during their active membership, solving the "Sam joining late" requirement.
 
-## 8. Debt simplification algorithm
-**Decision**: Greedy algorithm for minimizing settlement transactions.
-**Rationale**: Reduces N individual debts to the minimum number of transactions. Sorts debtors and creditors, then matches them greedily. This directly addresses Aisha's "who owes whom" requirement.
+## ⚙️ Core Engines
 
-## 9. Anomaly handling philosophy
-**Decision**: Surface everything, auto-fix nothing without approval.
-**Rationale**: Meera's requirement — no silent deletions or changes. Every anomaly is shown with a suggested fix, but the user must explicitly approve or reject each one before import. Bulk approve/reject is available for convenience.
+### Anomaly Detection Philosophy
+- **Options considered**: Automatic cleaning, rejection of invalid files, user-led resolution.
+- **Why chosen**: "Surface everything" philosophy. The parser detects inconsistencies but delegates all destructive actions to explicit user approval, ensuring transparency (Meera's requirement).
+
+### Balance Simplification Algorithm
+- **Options considered**: Net balance calculation (N debts), Greedy transaction matching.
+- **Why chosen**: A greedy algorithm collapses individual debts into the absolute minimum number of settlement transactions, reducing friction for the user.
+
+### Multi-Currency Handling
+- **Options considered**: Single currency only, dynamic external API fetching.
+- **Why chosen**: Storing native values prevents precision loss. Normalizing to INR at runtime using a stable rate provides a predictable "Who owes whom" calculation without external API dependencies.
+
+---
+*For functional requirements, see `SCOPE.md`.*

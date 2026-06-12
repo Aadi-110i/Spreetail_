@@ -1,70 +1,75 @@
-# SCOPE.md — Anomaly Log & Database Schema
+# 🎯 Project Scope
 
-## Detected CSV Anomalies
+This document outlines the core functional requirements, business logic, and data architecture for **Premium Split**.
 
-The CSV parser detects and surfaces the following 12+ anomaly types:
+## 🧠 Business Logic: Anomaly Detection Log
 
-| # | Anomaly Type | Severity | Description | Policy |
+The CSV parser detects and surfaces the following anomalies. Every issue is presented to the user for explicit approval or rejection.
+
+| # | Anomaly Type | Severity | Description | Handling Policy |
 |---|---|---|---|---|
-| 1 | `DUPLICATE_ENTRY` | Error | Two rows with identical description, payer, amount, and date | Flag for user review; reject duplicates by default |
-| 2 | `INCONSISTENT_DATE_FORMAT` | Warning | Mixed date formats (YYYY-MM-DD, MM/DD/YYYY, DD-MM-YYYY) | Parse all formats; flag inconsistencies; normalize to ISO |
-| 3 | `NEGATIVE_AMOUNT` | Error | Amount is negative | Flag error; suggest absolute value |
-| 4 | `ZERO_AMOUNT` | Warning | Amount is zero | Flag for review; may be intentional |
-| 5 | `MISSING_PAYER` | Error | "Paid By" field is empty | Cannot import; require user action |
-| 6 | `INCONSISTENT_NAME` | Warning | Name variants (e.g., "samuel" → "Sam") | Auto-normalize with flag for approval |
-| 7 | `WHITESPACE_IN_NAME` | Info | Leading/trailing whitespace in names | Auto-trim with flag |
-| 8 | `INVALID_CURRENCY` | Warning | Non-standard currency codes (e.g., "Rs") | Interpret "Rs" as INR; flag unknown codes |
-| 9 | `PERCENTAGE_NOT_100` | Error | Percentage splits don't sum to 100% | Flag error; cannot import |
-| 10 | `EXACT_SPLIT_MISMATCH` | Error | Exact split amounts don't match total | Flag error; show discrepancy |
-| 11 | `MEMBER_BEFORE_JOIN` | Error | Member included before their join date (Sam's concern) | Flag error; suggest removal from split |
-| 12 | `FUTURE_DATE` | Warning | Expense date is in the future | Flag for review |
-| 13 | `MISSING_FIELD` | Error | Required field is missing or invalid | Cannot import; require user action |
+| 1 | `DUPLICATE_ENTRY` | Error | Identical description, payer, amount, and date. | Flag for review; skip if rejected. |
+| 2 | `INCONSISTENT_DATE` | Warning | Mixed formats (YYYY-MM-DD vs MM/DD/YYYY). | Normalize to ISO; flag for approval. |
+| 3 | `NEGATIVE_AMOUNT` | Error | Amount is negative. | Flag as error; suggest absolute value. |
+| 4 | `ZERO_AMOUNT` | Warning | Amount is zero. | Flag for review (may be intentional). |
+| 5 | `MISSING_PAYER` | Error | "Paid By" field is empty. | Blocking error; requires user entry. |
+| 6 | `INCONSISTENT_NAME` | Warning | Name variants (e.g., "samuel" → "Sam"). | Auto-normalize using fuzzy map; flag. |
+| 7 | `WHITESPACE_IN_NAME`| Info | Extra spaces in names. | Auto-trim; notify user. |
+| 8 | `INVALID_CURRENCY` | Warning | Non-standard codes (e.g., "Rs"). | Interpret "Rs" as INR; flag unknown codes. |
+| 9 | `PERCENTAGE_MISMATCH`| Error | Split percentages don't total 100%. | Blocking error; import disabled for row. |
+| 10| `EXACT_SPLIT_ERROR` | Error | Split amounts don't match total. | Blocking error; show discrepancy. |
+| 11| `TEMPORAL_VIOLATION`| Error | Member included before join date (e.g. Sam). | Flag error; suggest removal from split. |
+| 12| `FUTURE_DATE` | Warning | Expense date is in the future. | Flag for review. |
+| 13| `MISSING_FIELD` | Error | Required field is missing or invalid. | Blocking error; requires correction. |
 
-## Database Schema
+## 📊 Database Schema
 
 ### User
-- `id` (UUID, PK)
-- `name` (String)
-- `email` (String, unique)
-- `createdAt`, `updatedAt`
+- `id`: String (UUID, PK)
+- `name`: String
+- `email`: String (Unique)
+- `createdAt`, `updatedAt`: DateTime
 
 ### Group
-- `id` (UUID, PK)
-- `name` (String)
-- `description` (String, optional)
-- `createdAt`, `updatedAt`
+- `id`: String (UUID, PK)
+- `name`: String
+- `description`: String (Optional)
+- `createdAt`, `updatedAt`: DateTime
 
-### GroupMember
-- `id` (UUID, PK)
-- `groupId` → Group
-- `userId` → User
-- `joinedAt` (DateTime) — Tracks when member joined
-- `leftAt` (DateTime, nullable) — Tracks when member left
-- Unique constraint on (groupId, userId)
+### GroupMember (Temporal Junction)
+- `id`: String (UUID, PK)
+- `groupId`: String (FK -> Group)
+- `userId`: String (FK -> User)
+- `joinedAt`: DateTime (Defaults to group creation or specific date)
+- `leftAt`: DateTime (Nullable, tracks when a member leaves)
+- *Constraint*: Unique (groupId, userId)
 
 ### Expense
-- `id` (UUID, PK)
-- `groupId` → Group
-- `description` (String)
-- `amount` (Float)
-- `currency` (String, default "INR")
-- `date` (DateTime)
-- `payerId` → User
-- `createdAt`, `updatedAt`
+- `id`: String (UUID, PK)
+- `groupId`: String (FK -> Group)
+- `description`: String
+- `amount`: Float
+- `currency`: String (Default "INR")
+- `date`: DateTime
+- `payerId`: String (FK -> User)
+- `createdAt`, `updatedAt`: DateTime
 
 ### ExpenseSplit
-- `id` (UUID, PK)
-- `expenseId` → Expense
-- `userId` → User
-- `amount` (Float) — Exact amount owed
-- Unique constraint on (expenseId, userId)
+- `id`: String (UUID, PK)
+- `expenseId`: String (FK -> Expense)
+- `userId`: String (FK -> User)
+- `amount`: Float (Calculated share)
+- *Constraint*: Unique (expenseId, userId)
 
 ### Settlement
-- `id` (UUID, PK)
-- `groupId` → Group
-- `payerId` → User (person paying)
-- `payeeId` → User (person receiving)
-- `amount` (Float)
-- `currency` (String, default "INR")
-- `date` (DateTime)
-- `createdAt`
+- `id`: String (UUID, PK)
+- `groupId`: String (FK -> Group)
+- `payerId`: String (FK -> User)
+- `payeeId`: String (FK -> User)
+- `amount`: Float
+- `currency`: String (Default "INR")
+- `date`: DateTime
+- `createdAt`: DateTime
+
+---
+*For detailed technical decisions, refer to `DECISIONS.md`.*
