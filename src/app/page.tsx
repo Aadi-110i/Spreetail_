@@ -71,6 +71,34 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Platform Capabilities Showcase */}
+      <section style={{ borderTop: '1px solid var(--border)', padding: '6rem 3rem' }}>
+        <h2 className="slide-up" style={{ marginBottom: '4rem', textAlign: 'center' }}>Platform Capabilities</h2>
+        
+        <div className="grid-3 stagger" style={{ marginTop: '2rem' }}>
+          <div className="card slide-up" style={{ padding: '3rem 2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Debt Simplification</h3>
+            <p style={{ color: 'var(--grey)', lineHeight: '1.6' }}>
+              Say goodbye to the chaotic web of micro-transactions. Our greedy settlement algorithm calculates net balances and mathematically minimizes the total number of payments required. A "Who Owes Whom" summary that actually makes sense.
+            </p>
+          </div>
+          
+          <div className="card slide-up" style={{ padding: '3rem 2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Temporal Membership</h3>
+            <p style={{ color: 'var(--grey)', lineHeight: '1.6' }}>
+              New flatmate moved in? Our temporal database schema tracks exact join and leave dates. The system actively cross-references expense dates to ensure members are never unfairly billed for historical group expenses.
+            </p>
+          </div>
+          
+          <div className="card slide-up" style={{ padding: '3rem 2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>Interactive Staging Area</h3>
+            <p style={{ color: 'var(--grey)', lineHeight: '1.6' }}>
+              Upload your raw CSV and let our parsing engine do the work. It detects 12+ anomalies—from duplicates and negative amounts to bad dates—and places them in a beautiful Staging Area for your explicit approval before committing to the database.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer style={{ padding: '3rem', borderTop: '1px solid var(--border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
