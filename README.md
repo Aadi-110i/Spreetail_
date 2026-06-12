@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Premium Split — Shared Expenses App
 
-## Getting Started
+A beautiful, full-featured shared expenses management application built with Next.js, Prisma, and SQLite. Designed for flatmates to track, split, and settle shared expenses with multi-currency support and intelligent CSV data import with anomaly detection.
 
-First, run the development server:
+## ✨ Features
+
+- **User Management** — Login/signup, group creation, temporal membership tracking
+- **Expense Management** — Equal, percentage, and exact split types with multi-currency (INR/USD)
+- **Balance Engine** — Real-time who-owes-whom calculations with debt simplification
+- **CSV Importer** — Drag-and-drop CSV upload with 12+ anomaly detection rules
+- **Approval Workflow** — Review and approve/reject each anomaly before data import
+- **Settlement Recording** — Track payments between members
+- **Import Reports** — Automated summary of all detected issues and actions taken
+
+## 🚀 Setup Instructions
+
+### Prerequisites
+
+- Node.js v18+
+- npm
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone <repo-url>
+cd spreetailassignment
+
+# Install dependencies
+npm install
+
+# Initialize the database
+npx prisma db push
+npx prisma generate
+
+# Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env` file in the root:
 
-## Learn More
+```
+DATABASE_URL="file:./dev.db"
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🏗️ Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Technology | Purpose |
+|---|---|
+| Next.js 16 (App Router) | Full-stack React framework |
+| TypeScript | Type safety |
+| Prisma + SQLite | ORM + Relational database |
+| Vanilla CSS | Premium glassmorphism design system |
+| Server Actions | Backend API layer |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Project Structure
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx           # Landing page
+│   ├── login/             # Authentication
+│   ├── dashboard/         # Authenticated dashboard
+│   │   ├── groups/        # Group management
+│   │   └── balances/      # Balance overview
+│   └── import/            # CSV importer
+├── actions/               # Server actions
+│   ├── auth.ts           # Login/signup
+│   ├── groups.ts         # Group CRUD
+│   ├── expenses.ts       # Expense CRUD
+│   └── import.ts         # CSV import
+└── lib/                   # Shared utilities
+    ├── auth.ts           # Session management
+    ├── prisma.ts         # DB client
+    ├── csv-parser.ts     # Anomaly detection engine
+    ├── balance-engine.ts # Balance calculations
+    └── currency.ts       # Currency conversion
+```
