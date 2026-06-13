@@ -5,6 +5,9 @@ import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { parseCSV, type ImportReport, type ParsedExpense, type Anomaly } from '@/lib/csv-parser';
 import { revalidatePath } from 'next/cache';
+import crypto from 'crypto';
+
+const DEFAULT_PASSWORD_HASH = crypto.createHash('sha256').update('flat4b123').digest('hex');
 
 export async function importCSV(csvContent: string): Promise<ImportReport> {
   const userId = await getSession();
@@ -44,7 +47,7 @@ export async function commitImport(
     const email = `${name.toLowerCase()}@flat4b.com`;
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      user = await prisma.user.create({ data: { name, email } });
+      user = await prisma.user.create({ data: { name, email, password: DEFAULT_PASSWORD_HASH } });
     }
     memberMap.set(name, user.id);
 

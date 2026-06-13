@@ -1,7 +1,27 @@
+'use client';
+
 import { loginOrSignup } from '@/actions/auth';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function LoginPage() {
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [error, setError] = useState('');
+
+  async function handleSubmit(formData: FormData) {
+    setError('');
+    formData.append('mode', mode);
+    try {
+      await loginOrSignup(formData);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        // Next.js redirect throws a special error — let it propagate
+        if (e.message === 'NEXT_REDIRECT') throw e;
+        setError(e.message);
+      }
+    }
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Left Side - Visual */}
@@ -55,25 +75,94 @@ export default function LoginPage() {
       }}>
         <div className="slide-up" style={{ width: '100%', maxWidth: '400px' }}>
           <div style={{ marginBottom: '3rem' }}>
-            <h2 style={{ marginBottom: '0.5rem', fontSize: '2.5rem' }}>Welcome</h2>
-            <p style={{ color: 'var(--grey-light)' }}>Sign in or create your account to continue</p>
+            <h2 style={{ marginBottom: '0.5rem', fontSize: '2.5rem' }}>
+              {mode === 'login' ? 'Welcome back' : 'Create account'}
+            </h2>
+            <p style={{ color: 'var(--grey-light)' }}>
+              {mode === 'login' ? 'Sign in to your account to continue' : 'Fill in your details to get started'}
+            </p>
           </div>
-          
-          <form action={loginOrSignup}>
-            <div className="form-group" style={{ marginBottom: '2.5rem' }}>
-              <label htmlFor="name" className="form-label">Full Name</label>
-              <input 
-                type="text" 
-                id="name" 
-                name="name" 
-                className="form-input" 
-                placeholder="e.g. Rohan" 
-                required 
-                style={{ fontSize: '1.1rem', padding: '1rem 0' }}
-              />
+
+          {/* Mode Toggle */}
+          <div style={{ 
+            display: 'flex', 
+            marginBottom: '2.5rem', 
+            border: '1px solid var(--border)', 
+            overflow: 'hidden' 
+          }}>
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setError(''); }}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: mode === 'login' ? 'var(--cream)' : 'transparent',
+                color: mode === 'login' ? 'var(--black)' : 'var(--grey)',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('signup'); setError(''); }}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: mode === 'signup' ? 'var(--cream)' : 'transparent',
+                color: mode === 'signup' ? 'var(--black)' : 'var(--grey)',
+                border: 'none',
+                borderLeft: '1px solid var(--border)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {error && (
+            <div style={{ 
+              padding: '1rem', 
+              marginBottom: '2rem', 
+              border: '1px solid rgba(204, 68, 68, 0.3)', 
+              color: 'var(--red-soft)', 
+              fontSize: '0.85rem',
+              lineHeight: '1.5'
+            }}>
+              {error}
             </div>
+          )}
+          
+          <form action={handleSubmit}>
+            {mode === 'signup' && (
+              <div className="form-group" style={{ marginBottom: '2rem' }}>
+                <label htmlFor="name" className="form-label">Full Name</label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  className="form-input" 
+                  placeholder="e.g. Rohan" 
+                  required={mode === 'signup'}
+                  style={{ fontSize: '1.1rem', padding: '1rem 0' }}
+                />
+              </div>
+            )}
             
-            <div className="form-group" style={{ marginBottom: '3rem' }}>
+            <div className="form-group" style={{ marginBottom: '2rem' }}>
               <label htmlFor="email" className="form-label">Email Address</label>
               <input 
                 type="email" 
@@ -85,15 +174,33 @@ export default function LoginPage() {
                 style={{ fontSize: '1.1rem', padding: '1rem 0' }}
               />
             </div>
+
+            <div className="form-group" style={{ marginBottom: '3rem' }}>
+              <label htmlFor="password" className="form-label">Password</label>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                className="form-input" 
+                placeholder="••••••••" 
+                required 
+                minLength={6}
+                style={{ fontSize: '1.1rem', padding: '1rem 0' }}
+              />
+            </div>
             
             <button type="submit" className="btn btn-filled" style={{ width: '100%', padding: '1.25rem', justifyContent: 'center' }}>
-              <span style={{ fontSize: '0.9rem', letterSpacing: '0.15em' }}>Continue to Dashboard →</span>
+              <span style={{ fontSize: '0.9rem', letterSpacing: '0.15em' }}>
+                {mode === 'login' ? 'Sign In →' : 'Create Account →'}
+              </span>
             </button>
           </form>
 
           <div style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--grey)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              New users are automatically registered
+              {mode === 'login' 
+                ? 'Don\'t have an account? Switch to Sign Up above' 
+                : 'Already registered? Switch to Login above'}
             </p>
           </div>
         </div>
