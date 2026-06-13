@@ -13,18 +13,76 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="hero">
-        <h1 className="slide-up">
-          We split expenses,<br />
-          not friendships.
-        </h1>
-        <p className="hero-sub slide-up" style={{ animationDelay: '0.2s' }}>
-          Shared expenses for flatmates — multi-currency,
-          intelligent CSV imports, and crystal-clear balances.
-        </p>
-        <div className="flex gap-2 mt-4 slide-up" style={{ animationDelay: '0.4s' }}>
-          <Link href="/login" className="btn btn-filled"><span>Get Started</span></Link>
-          <Link href="/import" className="btn"><span>Import CSV</span></Link>
+      <section className="hero" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: '4rem' }}>
+        {/* Left — Copy */}
+        <div style={{ flex: '1 1 55%' }}>
+          <h1 className="slide-up">
+            We split expenses,<br />
+            not friendships.
+          </h1>
+          <p className="hero-sub slide-up" style={{ animationDelay: '0.2s' }}>
+            Shared expenses for flatmates — multi-currency,
+            intelligent CSV imports, and crystal-clear balances.
+          </p>
+          <div className="flex gap-2 mt-4 slide-up" style={{ animationDelay: '0.4s' }}>
+            <Link href="/login" className="btn btn-filled"><span>Get Started</span></Link>
+            <Link href="/import" className="btn"><span>Import CSV</span></Link>
+          </div>
+        </div>
+
+        {/* Right — Mock Dashboard Card */}
+        <div className="slide-up" style={{ flex: '0 1 380px', animationDelay: '0.5s' }}>
+          <div style={{ 
+            border: '1px solid var(--border)', 
+            background: 'var(--black-soft)', 
+            padding: '2rem',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Subtle accent line */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '1px', background: 'linear-gradient(90deg, transparent, var(--accent), transparent)' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
+              <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--grey)' }}>Flat 4B — May 2024</span>
+              <span style={{ fontSize: '0.6rem', padding: '0.2rem 0.6rem', border: '1px solid rgba(68,170,136,0.3)', color: 'var(--green-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Active</span>
+            </div>
+
+            {/* Balance rows */}
+            {[
+              { name: 'Aisha',  amount: '+ ₹2,450', color: 'var(--green-soft)' },
+              { name: 'Rohan',  amount: '- ₹1,820', color: 'var(--red-soft)' },
+              { name: 'Priya',  amount: '+ ₹640',   color: 'var(--green-soft)' },
+              { name: 'Sam',    amount: '- ₹870',   color: 'var(--red-soft)' },
+              { name: 'Meera',  amount: '- ₹400',   color: 'var(--amber-soft)' },
+            ].map((m) => (
+              <div key={m.name} style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: '0.7rem 0', 
+                borderBottom: '1px solid rgba(255,255,255,0.04)' 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ 
+                    width: '28px', height: '28px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: '1px solid var(--border)', 
+                    fontSize: '0.6rem', fontWeight: 500, letterSpacing: '0.05em', 
+                    color: 'var(--cream)' 
+                  }}>
+                    {m.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--cream)' }}>{m.name}</span>
+                </div>
+                <span style={{ fontSize: '0.85rem', fontFamily: 'var(--font-sans)', fontWeight: 500, color: m.color }}>{m.amount}</span>
+              </div>
+            ))}
+
+            <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--grey)' }}>Total Expenses</span>
+              <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', color: 'var(--cream)', letterSpacing: '-0.02em' }}>₹48,200</span>
+            </div>
+          </div>
         </div>
       </section>
 
