@@ -2,11 +2,20 @@
 
 import { loginOrSignup } from '@/actions/auth';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const m = searchParams.get('mode');
+    if (m === 'signup' || m === 'login') {
+      setMode(m as 'login' | 'signup');
+    }
+  }, [searchParams]);
 
   async function handleSubmit(formData: FormData) {
     setError('');
@@ -201,5 +210,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

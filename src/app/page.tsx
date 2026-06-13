@@ -22,7 +22,7 @@ export default async function Home() {
           ) : (
             <>
               <Link href="/login" className="nav-link">Login</Link>
-              <Link href="/login" className="nav-link" style={{ opacity: 0.8 }}>Sign Up</Link>
+              <Link href="/login?mode=signup" className="nav-link" style={{ opacity: 0.8 }}>Sign Up</Link>
             </>
           )}
           <Link href="/import" className="nav-link">Import</Link>
