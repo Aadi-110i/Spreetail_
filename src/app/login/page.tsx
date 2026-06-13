@@ -11,14 +11,9 @@ export default function LoginPage() {
   async function handleSubmit(formData: FormData) {
     setError('');
     formData.append('mode', mode);
-    try {
-      await loginOrSignup(formData);
-    } catch (e: unknown) {
-      if (e instanceof Error) {
-        // Next.js redirect throws a special error — let it propagate
-        if (e.message === 'NEXT_REDIRECT') throw e;
-        setError(e.message);
-      }
+    const result = await loginOrSignup(formData);
+    if (result?.error) {
+      setError(result.error);
     }
   }
 

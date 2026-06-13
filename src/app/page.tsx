@@ -1,13 +1,30 @@
 import Link from 'next/link';
+import { getSession } from '@/lib/auth';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const userId = await getSession();
+  
   return (
     <>
       {/* Navigation */}
       <nav className="nav">
         <Link href="/" className="nav-brand">Premium Split</Link>
         <div className="nav-links">
-          <Link href="/login" className="nav-link">Login</Link>
+          {userId ? (
+            <>
+              <Link href="/dashboard" className="nav-link">Dashboard</Link>
+              <form action="/api/logout" method="POST" style={{ display: 'inline' }}>
+                <button type="submit" className="nav-link" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>Logout</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="nav-link">Login</Link>
+              <Link href="/login" className="nav-link" style={{ opacity: 0.8 }}>Sign Up</Link>
+            </>
+          )}
           <Link href="/import" className="nav-link">Import</Link>
         </div>
       </nav>
@@ -25,7 +42,11 @@ export default function Home() {
             intelligent CSV imports, and crystal-clear balances.
           </p>
           <div className="flex gap-2 mt-4 slide-up" style={{ animationDelay: '0.4s' }}>
-            <Link href="/login" className="btn btn-filled"><span>Get Started</span></Link>
+            {userId ? (
+              <Link href="/dashboard" className="btn btn-filled"><span>Go to Dashboard</span></Link>
+            ) : (
+              <Link href="/login" className="btn btn-filled"><span>Get Started</span></Link>
+            )}
             <Link href="/import" className="btn"><span>Import CSV</span></Link>
           </div>
         </div>
@@ -123,9 +144,15 @@ export default function Home() {
               Designed for flatmates who deserve better.
             </p>
           </div>
-          <Link href="/login" className="btn slide-up" style={{ animationDelay: '0.3s' }}>
-            <span>→ Enter App</span>
-          </Link>
+          {userId ? (
+            <Link href="/dashboard" className="btn slide-up" style={{ animationDelay: '0.3s' }}>
+              <span>→ Enter App</span>
+            </Link>
+          ) : (
+            <Link href="/login" className="btn slide-up" style={{ animationDelay: '0.3s' }}>
+              <span>→ Enter App</span>
+            </Link>
+          )}
         </div>
       </section>
 
@@ -168,9 +195,15 @@ export default function Home() {
             Join Premium Split today and let our algorithmic engine handle the awkward math for you.
           </p>
           <div className="flex gap-2 slide-up" style={{ justifyContent: 'center' }}>
-            <Link href="/login" className="btn btn-filled" style={{ padding: '1.25rem 3rem', fontSize: '0.85rem' }}>
-              <span>Enter Application</span>
-            </Link>
+            {userId ? (
+              <Link href="/dashboard" className="btn btn-filled" style={{ padding: '1.25rem 3rem', fontSize: '0.85rem' }}>
+                <span>Enter Application</span>
+              </Link>
+            ) : (
+              <Link href="/login" className="btn btn-filled" style={{ padding: '1.25rem 3rem', fontSize: '0.85rem' }}>
+                <span>Enter Application</span>
+              </Link>
+            )}
             <Link href="/import" className="btn" style={{ padding: '1.25rem 3rem', fontSize: '0.85rem' }}>
               <span>Test CSV Engine</span>
             </Link>

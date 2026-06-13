@@ -16,42 +16,47 @@ export async function loginOrSignup(formData: FormData) {
   const mode = formData.get('mode') as string; // 'login' or 'signup'
 
   if (!email || !password) {
-    throw new Error('Email and password are required');
+    return { error: 'Email and password are required' };
   }
 
   const hashedPassword = hashPassword(password);
 
-  if (mode === 'signup') {
-    // Sign up — create a new user
-    if (!name) {
-      throw new Error('Name is required for sign up');
+  try {
+    if (mode === 'signup') {
+      // Sign up — create a new user
+      if (!name) {
+        return { error: 'Name is required for sign up' };
+      }
+
+      const existing = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existing) {
+        return { error: 'An account with this email already exists. Please log in instead.' };
+      }
+
+      const user = await prisma.user.create({
+        data: { name, email, password: hashedPassword },
+      });
+
+      await setSession(user.id);
+    } else {
+      // Login — verify credentials
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user || user.password !== hashedPassword) {
+        return { error: 'Invalid email or password' };
+      }
+
+      await setSession(user.id);
     }
-
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existing) {
-      throw new Error('An account with this email already exists. Please log in instead.');
-    }
-
-    const user = await prisma.user.create({
-      data: { name, email, password: hashedPassword },
-    });
-
-    await setSession(user.id);
-    redirect('/dashboard');
-  } else {
-    // Login — verify credentials
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user || user.password !== hashedPassword) {
-      throw new Error('Invalid email or password');
-    }
-
-    await setSession(user.id);
-    redirect('/dashboard');
+  } catch (e: any) {
+    console.error('Auth error:', e);
+    return { error: 'A database error occurred. If on Vercel, SQLite writes may be restricted.' };
   }
+
+  redirect('/dashboard');
 }
