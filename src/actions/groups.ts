@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import crypto from 'crypto';
+
+const DEFAULT_PASSWORD_HASH = crypto.createHash('sha256').update('flat4b123').digest('hex');
 
 export async function createGroup(formData: FormData) {
   const userId = await getSession();
@@ -37,7 +40,7 @@ export async function addMemberToGroup(formData: FormData) {
   // Find or create user
   let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    user = await prisma.user.create({ data: { name, email } });
+    user = await prisma.user.create({ data: { name, email, password: DEFAULT_PASSWORD_HASH } });
   }
 
   // Check if already member
