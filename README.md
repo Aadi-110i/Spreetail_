@@ -6,7 +6,7 @@ Premium Split is a high-fidelity expense management platform built with Next.js 
 
 ## AI Collaboration
 
-This project was developed in collaboration with **Antigravity (Gemini)**, an AI pair programming assistant. AI was used for architectural scaffolding, complex logic implementation (anomaly detection engine), and drafting the design system.
+This project was developed in collaboration with Gemini, an AI pair programming assistant. AI was used for architectural scaffolding, complex logic implementation (anomaly detection engine), and drafting the design system.
 
 ##  Setup Instructions
 
