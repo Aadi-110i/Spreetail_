@@ -151,7 +151,14 @@ export async function commitImport(
         continue;
       }
 
-      const dbExpense = await prisma.expense.create({
+      const splitData = expense.splits
+        .map(split => {
+          const splitUserId = memberMap.get(split.name);
+          return splitUserId ? { userId: splitUserId, amount: split.amount } : null;
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null);
+
+      await prisma.expense.create({
         data: {
           groupId: group.id,
           description: expense.description,
@@ -159,21 +166,11 @@ export async function commitImport(
           currency: expense.currency,
           date: expense.date,
           payerId,
+          splits: {
+            create: splitData,
+          },
         },
       });
-
-      for (const split of expense.splits) {
-        const splitUserId = memberMap.get(split.name);
-        if (splitUserId) {
-          await prisma.expenseSplit.create({
-            data: {
-              expenseId: dbExpense.id,
-              userId: splitUserId,
-              amount: split.amount,
-            },
-          });
-        }
-      }
 
       imported++;
     } catch {
