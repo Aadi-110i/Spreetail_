@@ -19,18 +19,19 @@ export async function calculateGroupBalances(groupId: string): Promise<{
   memberBalances: MemberBalance[];
   settlements: BalanceEntry[];
 }> {
-  const expenses = await prisma.expense.findMany({
-    where: { groupId },
-    include: {
-      payer: true,
-      splits: { include: { user: true } },
-    },
-  });
-
-  const existingSettlements = await prisma.settlement.findMany({
-    where: { groupId },
-    include: { payer: true, payee: true },
-  });
+  const [expenses, existingSettlements] = await Promise.all([
+    prisma.expense.findMany({
+      where: { groupId },
+      include: {
+        payer: true,
+        splits: { include: { user: true } },
+      },
+    }),
+    prisma.settlement.findMany({
+      where: { groupId },
+      include: { payer: true, payee: true },
+    })
+  ]);
 
   // Net balance per user (in INR for consistency)
   const balanceMap = new Map<string, { name: string; net: number; paid: number; owed: number }>();

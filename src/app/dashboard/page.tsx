@@ -21,15 +21,17 @@ export default async function DashboardPage() {
 
   const userGroupIds = user?.groupMembers.map(gm => gm.groupId) || [];
 
-  const totalExpenses = await prisma.expense.count({
-    where: { groupId: { in: userGroupIds } },
-  });
   const totalGroups = userGroupIds.length;
-  const totalUsers = await prisma.groupMember.findMany({
-    where: { groupId: { in: userGroupIds }, leftAt: null },
-    select: { userId: true },
-    distinct: ['userId'],
-  }).then(members => members.length);
+  const [totalExpenses, totalUsers] = await Promise.all([
+    prisma.expense.count({
+      where: { groupId: { in: userGroupIds } },
+    }),
+    prisma.groupMember.findMany({
+      where: { groupId: { in: userGroupIds }, leftAt: null },
+      select: { userId: true },
+      distinct: ['userId'],
+    }).then(members => members.length)
+  ]);
 
   return (
     <div className="fade-in">

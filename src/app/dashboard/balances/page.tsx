@@ -11,15 +11,19 @@ export default async function BalancesPage() {
     include: { expenses: true },
   });
 
-  const allBalances = [];
-  for (const group of groups) {
-    try {
-      const { memberBalances, settlements } = await calculateGroupBalances(group.id);
-      if (memberBalances.length > 0) {
-        allBalances.push({ group, memberBalances, settlements });
-      }
-    } catch { /* skip */ }
-  }
+  const allBalancesResults = await Promise.all(
+    groups.map(async (group) => {
+      try {
+        const { memberBalances, settlements } = await calculateGroupBalances(group.id);
+        if (memberBalances.length > 0) {
+          return { group, memberBalances, settlements };
+        }
+      } catch { /* skip */ }
+      return null;
+    })
+  );
+  
+  const allBalances = allBalancesResults.filter((b): b is NonNullable<typeof b> => b !== null);
 
   return (
     <div className="fade-in">
