@@ -1,11 +1,14 @@
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
   const userId = await getSession();
+  if (!userId) redirect('/login');
+
   const user = await prisma.user.findUnique({
-    where: { id: userId! },
+    where: { id: userId },
     include: {
       groupMembers: {
         include: { group: { include: { _count: { select: { members: true, expenses: true } } } } },
@@ -14,6 +17,7 @@ export default async function DashboardPage() {
       expensesPaid: { orderBy: { date: 'desc' }, take: 8, include: { group: true } },
     },
   });
+  if (!user) redirect('/login');
 
   const userGroupIds = user?.groupMembers.map(gm => gm.groupId) || [];
 
