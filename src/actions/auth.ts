@@ -55,7 +55,7 @@ export async function loginOrSignup(formData: FormData) {
     }
   } catch (e: any) {
     console.error('Auth error:', e);
-    return { error: 'A database error occurred. If on Vercel, SQLite writes may be restricted.' };
+    return { error: `Database error: ${e.message || String(e)}` };
   }
 
   redirect('/dashboard');
