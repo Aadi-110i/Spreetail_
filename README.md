@@ -1,55 +1,36 @@
-#  Premium Split
+# Premium Split
 
-> Shared expenses, simplified. Elegant tracking for modern flatmates.
+A high-fidelity expense management platform built for modern flatmates.
 
-Premium Split is a high-fidelity expense management platform built with Next.js and Prisma. It combines intelligent data ingestion with a refined glassmorphism interface to make financial transparency effortless.
+## Setup Instructions
 
-## AI Collaboration
+**Prerequisites:** Node.js v18+, npm, and a Supabase PostgreSQL Database.
 
-This project was developed in collaboration with Gemini, an AI pair programming assistant. AI was used for architectural scaffolding, complex logic implementation (anomaly detection engine), and drafting the design system.
-
-##  Setup Instructions
-
-### Prerequisites
-- Node.js v18+
-- npm
-- A Supabase PostgreSQL Database
-
-### Installation & Launch
 ```bash
-# 1. Clone the repository
+# Clone and install
 git clone https://github.com/Aadi-110i/Spreetail_.git
 cd Spreetail_
-
-# 2. Install dependencies
 npm install
 
-# 3. Configure Environment Variables
-# Create a .env file in the root with your Supabase credentials:
-# DATABASE_URL="postgresql://postgres.[REF]:[PASS]@aws-1-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
-# DIRECT_URL="postgresql://postgres.[REF]:[PASS]@aws-1-[REGION].pooler.supabase.com:5432/postgres"
+# Configure environment
+# Create a .env file with your Supabase credentials:
+# DATABASE_URL="postgresql://...:6543/postgres?pgbouncer=true"
+# DIRECT_URL="postgresql://...:5432/postgres"
 
-# 4. Initialize the Database
-# This will push the schema to Supabase and generate the Prisma client
+# Initialize database and run
 npx prisma db push --accept-data-loss
-
-# 5. Start the development server
 npm run dev
 ```
 
-Visit `http://localhost:3000` to begin.
+The application will be available at `http://localhost:3000`.
 
-##  Core Experience
-- **Intelligent Import** — Advanced CSV parser with 12+ automated anomaly detection rules.
-- **Dynamic Balances** — Real-time debt simplification using optimized greedy algorithms.
-- **Temporal Logic** — Precise membership tracking ensures users only pay for what they owe.
-- **Multi-Currency** — Native support for INR and USD with intelligent conversion.
+## Tech Stack
 
-##  Tech Stack
-- **Framework** — Next.js 16 (App Router)
-- **Database** — PostgreSQL (Hosted on Supabase) + Prisma ORM
-- **Styling** — Vanilla CSS (Custom Design System)
-- **Language** — TypeScript
+- **Framework:** Next.js 16 (App Router)
+- **Database:** PostgreSQL (Supabase) + Prisma ORM
+- **Language:** TypeScript
+- **Styling:** Custom Vanilla CSS Design System
 
----
-Built for excellence. Focused on simplicity.
+## AI Collaboration
+
+This application was developed in collaboration with **Antigravity (Claude 3.5 Sonnet & Gemini 1.5 Pro)**. AI was utilized for architectural scaffolding, implementing the CSV anomaly detection engine, and generating the core design system.
