@@ -15,9 +15,17 @@ export default async function DashboardPage() {
     },
   });
 
-  const totalExpenses = await prisma.expense.count();
-  const totalGroups = await prisma.group.count();
-  const totalUsers = await prisma.user.count();
+  const userGroupIds = user?.groupMembers.map(gm => gm.groupId) || [];
+
+  const totalExpenses = await prisma.expense.count({
+    where: { groupId: { in: userGroupIds } },
+  });
+  const totalGroups = userGroupIds.length;
+  const totalUsers = await prisma.groupMember.findMany({
+    where: { groupId: { in: userGroupIds }, leftAt: null },
+    select: { userId: true },
+    distinct: ['userId'],
+  }).then(members => members.length);
 
   return (
     <div className="fade-in">

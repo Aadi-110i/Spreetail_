@@ -34,6 +34,19 @@ export async function commitImport(
     });
   }
 
+  // Ensure the importing user is a member of the group
+  const importingUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (importingUser) {
+    const importerMembership = await prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId: group.id, userId } },
+    });
+    if (!importerMembership) {
+      await prisma.groupMember.create({
+        data: { groupId: group.id, userId, joinedAt: new Date() },
+      });
+    }
+  }
+
   // Ensure all members exist
   const memberNames = new Set<string>();
   for (const expense of approvedExpenses) {
@@ -77,10 +90,42 @@ export async function commitImport(
     // Check if this expense was explicitly rejected
     const wasRejected = expense.anomalies.some(a => anomalyResolutions[a.id] === 'rejected');
 
-    if (wasRejected || hasBlockingAnomaly) {
+    // If duplicate entry anomaly is approved, it means "approve the deletion/skipping of this duplicate"
+    const isApprovedDuplicateSkip = expense.anomalies.some(a => a.type === 'DUPLICATE_ENTRY' && anomalyResolutions[a.id] === 'approved');
+
+    if (wasRejected || hasBlockingAnomaly || isApprovedDuplicateSkip) {
       skipped++;
       continue;
     }
+
+    // Apply approved suggested fixes (e.g., name normalizations, currency, dates)
+    expense.anomalies.forEach(a => {
+      if (anomalyResolutions[a.id] === 'approved' && a.suggestedValue) {
+        if (a.type === 'INCONSISTENT_NAME' || a.type === 'WHITESPACE_IN_NAME' || a.type === 'UNKNOWN_MEMBER') {
+          if (a.field === 'Paid By') {
+            expense.paidBy = a.suggestedValue;
+          }
+          // Update any split names that match the original incorrect value
+          expense.splits.forEach(s => {
+            if (s.name === a.originalValue) {
+              s.name = a.suggestedValue!;
+            }
+          });
+        } else if (a.type === 'MEMBER_BEFORE_JOIN') {
+          // If approved, remove the member from the split entirely
+          expense.splits = expense.splits.filter(s => s.name !== a.originalValue);
+        } else if (a.type === 'INVALID_CURRENCY') {
+          expense.currency = a.suggestedValue;
+        } else if (a.type === 'NEGATIVE_AMOUNT') {
+          expense.totalAmount = Math.abs(expense.totalAmount);
+        } else if (a.type === 'INCONSISTENT_DATE_FORMAT') {
+          const parts = a.suggestedValue.split('-');
+          if (parts.length === 3) {
+            expense.date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+          }
+        }
+      }
+    });
 
     const payerId = memberMap.get(expense.paidBy);
     if (!payerId) {
@@ -89,6 +134,23 @@ export async function commitImport(
     }
 
     try {
+      // Check for duplicate before inserting
+      const existing = await prisma.expense.findFirst({
+        where: {
+          groupId: group.id,
+          description: expense.description,
+          amount: expense.totalAmount,
+          currency: expense.currency,
+          date: expense.date,
+          payerId,
+        },
+      });
+
+      if (existing) {
+        skipped++;
+        continue;
+      }
+
       const dbExpense = await prisma.expense.create({
         data: {
           groupId: group.id,

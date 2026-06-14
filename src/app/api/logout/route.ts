@@ -1,7 +1,14 @@
 import { clearSession } from '@/lib/auth';
-import { redirect } from 'next/navigation';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST() {
+export async function GET(request: NextRequest) {
   await clearSession();
-  redirect('/');
+  const origin = request.nextUrl.origin;
+  return NextResponse.redirect(`${origin}/`);
+}
+
+export async function POST(request: NextRequest) {
+  await clearSession();
+  const origin = request.nextUrl.origin;
+  return NextResponse.redirect(`${origin}/`, 303);
 }

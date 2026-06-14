@@ -77,7 +77,10 @@ const NAME_NORMALIZATION: Record<string, string> = {
   'aisha': 'Aisha',
   'rohan': 'Rohan',
   'priya': 'Priya',
+  'priya s': 'Priya',
   'meera': 'Meera',
+  'dev': 'Dev',
+  "dev's friend kabir": 'Dev',
 };
 
 function generateId(): string {
@@ -99,11 +102,35 @@ function parseDate(dateStr: string): { date: Date | null; format: string; isAmbi
     return { date: new Date(parseInt(y), parseInt(m) - 1, parseInt(d)), format: 'YYYY-MM-DD', isAmbiguous: false };
   }
 
-  // MM/DD/YYYY
-  const usMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (usMatch) {
-    const [, m, d, y] = usMatch;
-    return { date: new Date(parseInt(y), parseInt(m) - 1, parseInt(d)), format: 'MM/DD/YYYY', isAmbiguous: false };
+  // DD/MM/YYYY — the CSV uses this format (confirmed by descriptions like "March rent" on 01/03/2026)
+  const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slashMatch) {
+    const [, first, second, y] = slashMatch;
+    const f = parseInt(first);
+    const s = parseInt(second);
+    const year = parseInt(y);
+
+    // Smart disambiguation:
+    // If first > 12, it must be DD/MM (day can't be a month)
+    // If second > 12, it must be MM/DD (second can't be a month)
+    // Otherwise, default to DD/MM/YYYY (the format used in this CSV)
+    let day: number, month: number;
+    let format: string;
+    let isAmbiguous = false;
+
+    if (f > 12) {
+      // First number can't be a month → DD/MM/YYYY
+      day = f; month = s; format = 'DD/MM/YYYY';
+    } else if (s > 12) {
+      // Second number can't be a month → MM/DD/YYYY
+      month = f; day = s; format = 'MM/DD/YYYY';
+    } else {
+      // Both <= 12 → ambiguous, default to DD/MM/YYYY
+      day = f; month = s; format = 'DD/MM/YYYY';
+      isAmbiguous = true;
+    }
+
+    return { date: new Date(year, month - 1, day), format, isAmbiguous };
   }
 
   // DD-MM-YYYY
@@ -113,44 +140,117 @@ function parseDate(dateStr: string): { date: Date | null; format: string; isAmbi
     return { date: new Date(parseInt(y), parseInt(m) - 1, parseInt(d)), format: 'DD-MM-YYYY', isAmbiguous: true };
   }
 
+  // "Mon DD" or "Mon DD, YYYY" — e.g. "Mar 14" or "Mar 14, 2026"
+  const MONTHS: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+  const shortMatch = trimmed.match(/^([A-Za-z]{3})\s+(\d{1,2})(?:,?\s*(\d{4}))?$/);
+  if (shortMatch) {
+    const [, mon, dayStr, yearStr] = shortMatch;
+    const monthIdx = MONTHS[mon.toLowerCase()];
+    if (monthIdx !== undefined) {
+      const year = yearStr ? parseInt(yearStr) : new Date().getFullYear();
+      return { date: new Date(year, monthIdx, parseInt(dayStr)), format: 'Mon DD', isAmbiguous: false };
+    }
+  }
+
   return { date: null, format: 'UNKNOWN', isAmbiguous: false };
 }
 
-function parseSplitDetails(splitType: string, splitDetails: string, totalAmount: number): { name: string; amount: number }[] {
+function parseSplitDetails(splitType: string, splitWith: string, splitDetails: string, totalAmount: number): { name: string; amount: number }[] {
   const splits: { name: string; amount: number }[] = [];
+  const type = splitType.toLowerCase().trim();
 
-  if (splitType === 'equal') {
-    const members = splitDetails.split(',').map(n => n.trim());
+  if (type === 'equal') {
+    const members = splitWith.split(/[;,]/).map(n => n.trim()).filter(Boolean);
     const perPerson = totalAmount / members.length;
     members.forEach(name => {
       splits.push({ name: normalizeName(name), amount: Math.round(perPerson * 100) / 100 });
     });
-  } else if (splitType === 'exact') {
-    const pairs = splitDetails.split(',');
+  } else if (type === 'exact' || type === 'unequal') {
+    const pairs = splitDetails.split(/[;,]/).map(p => p.trim()).filter(Boolean);
     pairs.forEach(pair => {
-      const [name, amountStr] = pair.split(':');
-      if (name && amountStr) {
-        splits.push({ name: normalizeName(name), amount: parseFloat(amountStr) });
+      const match = pair.match(/^([a-zA-Z\s]+)[:\s]+([\d.]+)$/);
+      if (match) {
+        splits.push({ name: normalizeName(match[1]), amount: parseFloat(match[2]) });
       }
     });
-  } else if (splitType === 'percentage') {
-    const pairs = splitDetails.split(',');
+  } else if (type === 'percentage') {
+    const pairs = splitDetails.split(/[;,]/).map(p => p.trim()).filter(Boolean);
     pairs.forEach(pair => {
-      const [name, pctStr] = pair.split(':');
-      if (name && pctStr) {
-        const pct = parseFloat(pctStr);
-        splits.push({ name: normalizeName(name), amount: Math.round((pct / 100) * totalAmount * 100) / 100 });
+      const match = pair.match(/^([a-zA-Z\s]+)[:\s]+([\d.]+)(?:%)?$/);
+      if (match) {
+        const pct = parseFloat(match[2]);
+        splits.push({ name: normalizeName(match[1]), amount: Math.round((pct / 100) * totalAmount * 100) / 100 });
       }
     });
+  } else if (type === 'share') {
+    const pairs = splitDetails.split(/[;,]/).map(p => p.trim()).filter(Boolean);
+    let totalShares = 0;
+    const parsedShares: { name: string; share: number }[] = [];
+    pairs.forEach(pair => {
+      const match = pair.match(/^([a-zA-Z\s]+)[:\s]+([\d.]+)$/);
+      if (match) {
+        const share = parseFloat(match[2]);
+        parsedShares.push({ name: normalizeName(match[1]), share });
+        totalShares += share;
+      }
+    });
+    if (totalShares > 0) {
+      parsedShares.forEach(ps => {
+        splits.push({ name: ps.name, amount: Math.round((ps.share / totalShares) * totalAmount * 100) / 100 });
+      });
+    }
   }
 
   return splits;
 }
 
+function formatDateLocal(d: Date): string {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 export function parseCSV(csvContent: string): ImportReport {
-  const lines = csvContent.trim().split('\n');
-  const header = lines[0];
+  // Handle UTF-8 BOM
+  const sanitizedContent = csvContent.startsWith('\uFEFF') ? csvContent.slice(1) : csvContent;
+  const lines = sanitizedContent.trim().split('\n');
+  
+  if (lines.length === 0) {
+    return {
+      totalRows: 0,
+      validRows: 0,
+      anomalyRows: 0,
+      anomalies: [],
+      parsedExpenses: [],
+      summary: 'Empty CSV file.',
+    };
+  }
+
+  const header = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
   const dataLines = lines.slice(1).filter(l => l.trim() !== '');
+
+  // Helper for flexible header matching
+  const findCol = (possibleNames: string[]) => {
+    for (const name of possibleNames) {
+      const index = header.findIndex(h => h === name.toLowerCase() || h.includes(name.toLowerCase()) || name.toLowerCase().includes(h));
+      if (index !== -1) return index;
+    }
+    return -1;
+  };
+
+  // Dynamic column mapping with variations
+  const col = {
+    date: findCol(['date', 'time', 'day']),
+    description: findCol(['description', 'note', 'expense', 'item', 'details']),
+    paidBy: findCol(['paid by', 'payer', 'who paid', 'paidby', 'paid_by']),
+    amount: findCol(['amount', 'cost', 'total', 'price', 'value']),
+    currency: findCol(['currency', 'ccy', 'curr']),
+    splitType: findCol(['split type', 'method', 'type', 'splittype', 'split_type']),
+    splitWith: findCol(['split with', 'splitwith', 'split_with']),
+    splitDetails: findCol(['split details', 'splits', 'sharing', 'splitdetails', 'split_details']),
+    group: findCol(['group', 'category', 'flat']),
+  };
 
   const allAnomalies: Anomaly[] = [];
   const parsedExpenses: ParsedExpense[] = [];
@@ -165,20 +265,35 @@ export function parseCSV(csvContent: string): ImportReport {
     // Simple CSV parse (handles quoted fields with commas)
     const fields = parseCSVLine(line);
     
-    if (fields.length < 8) {
+    // Check if we have enough fields based on the highest index we need
+    const maxIndex = Math.max(...Object.values(col));
+    if (fields.length <= maxIndex) {
       rowAnomalies.push({
         id: generateId(),
         rowNumber,
         type: 'MISSING_FIELD',
         severity: 'error',
-        description: `Row has ${fields.length} fields, expected 8.`,
+        description: `Row has ${fields.length} fields, expected at least ${maxIndex + 1}.`,
         field: 'row',
         originalValue: line,
         resolution: 'pending',
       });
     }
 
-    const [dateStr, description, paidBy, splitType, splitDetails, amountStr, currency, group] = fields.map(f => f ?? '');
+    const dateStr = col.date !== -1 ? (fields[col.date] || '') : '';
+    const description = col.description !== -1 ? (fields[col.description] || '') : '';
+    const paidBy = col.paidBy !== -1 ? (fields[col.paidBy] || '') : '';
+    
+    // Parse amount correctly removing commas if they exist inside quoted strings, e.g. "1,200"
+    let amountStrRaw = col.amount !== -1 ? (fields[col.amount] || '') : '';
+    amountStrRaw = amountStrRaw.replace(/,/g, '');
+    const amountStr = amountStrRaw;
+    
+    const currency = col.currency !== -1 ? (fields[col.currency] || '') : '';
+    const splitType = col.splitType !== -1 ? (fields[col.splitType] || '') : 'equal';
+    const splitWith = col.splitWith !== -1 ? (fields[col.splitWith] || '') : '';
+    const splitDetails = col.splitDetails !== -1 ? (fields[col.splitDetails] || '') : '';
+    const groupStr = col.group !== -1 ? (fields[col.group] || '') : '';
 
     // 1. Date checks
     const { date, format, isAmbiguous } = parseDate(dateStr);
@@ -201,10 +316,10 @@ export function parseCSV(csvContent: string): ImportReport {
           rowNumber,
           type: 'INCONSISTENT_DATE_FORMAT',
           severity: 'warning',
-          description: `Date format "${format}" is inconsistent with previously seen "${dateFormatSeen}". Parsed as ${date.toISOString().split('T')[0]}.`,
+          description: `Date format "${format}" is inconsistent with previously seen "${dateFormatSeen}". Parsed as ${formatDateLocal(date)}.`,
           field: 'Date',
           originalValue: dateStr,
-          suggestedValue: date.toISOString().split('T')[0],
+          suggestedValue: formatDateLocal(date),
           resolution: 'pending',
         });
       }
@@ -248,7 +363,7 @@ export function parseCSV(csvContent: string): ImportReport {
           description: `Payer name has leading/trailing whitespace: "${paidBy}" → "${paidBy.trim()}"`,
           field: 'Paid By',
           originalValue: paidBy,
-          suggestedValue: paidBy.trim(),
+          suggestedValue: normalizeName(paidBy),
           resolution: 'pending',
         });
       }
@@ -272,7 +387,8 @@ export function parseCSV(csvContent: string): ImportReport {
     }
 
     // 3. Amount checks
-    const amount = parseFloat(amountStr);
+    const sanitizedAmountStr = amountStr.replace(/,/g, '').trim();
+    const amount = parseFloat(sanitizedAmountStr);
     if (isNaN(amount)) {
       rowAnomalies.push({
         id: generateId(),
@@ -312,7 +428,7 @@ export function parseCSV(csvContent: string): ImportReport {
     // 4. Currency checks
     const normalizedCurrency = currency.trim().toUpperCase();
     if (!['INR', 'USD'].includes(normalizedCurrency)) {
-      const suggestedCurr = (normalizedCurrency === 'RS' || normalizedCurrency === 'RS.') ? 'INR' : normalizedCurrency;
+      const suggestedCurr = (normalizedCurrency === '' || normalizedCurrency === 'RS' || normalizedCurrency === 'RS.') ? 'INR' : normalizedCurrency;
       rowAnomalies.push({
         id: generateId(),
         rowNumber,
@@ -327,12 +443,13 @@ export function parseCSV(csvContent: string): ImportReport {
     }
 
     // 5. Split checks
-    if (splitType === 'percentage' && splitDetails) {
-      const pairs = splitDetails.split(',');
+    const type = splitType.toLowerCase().trim();
+    if (type === 'percentage' && splitDetails) {
+      const pairs = splitDetails.split(/[;,]/).map(p => p.trim()).filter(Boolean);
       let totalPct = 0;
       pairs.forEach(pair => {
-        const [, pctStr] = pair.split(':');
-        if (pctStr) totalPct += parseFloat(pctStr);
+        const match = pair.match(/^([a-zA-Z\s]+)[:\s]+([\d.]+)(?:%)?$/);
+        if (match) totalPct += parseFloat(match[2]);
       });
       if (Math.abs(totalPct - 100) > 0.01) {
         rowAnomalies.push({
@@ -348,12 +465,12 @@ export function parseCSV(csvContent: string): ImportReport {
       }
     }
 
-    if (splitType === 'exact' && splitDetails && !isNaN(amount)) {
-      const pairs = splitDetails.split(',');
+    if ((type === 'exact' || type === 'unequal') && splitDetails && !isNaN(amount)) {
+      const pairs = splitDetails.split(/[;,]/).map(p => p.trim()).filter(Boolean);
       let totalSplit = 0;
       pairs.forEach(pair => {
-        const [, amtStr] = pair.split(':');
-        if (amtStr) totalSplit += parseFloat(amtStr);
+        const match = pair.match(/^([a-zA-Z\s]+)[:\s]+([\d.]+)$/);
+        if (match) totalSplit += parseFloat(match[2]);
       });
       if (Math.abs(totalSplit - amount) > 0.01) {
         rowAnomalies.push({
@@ -370,10 +487,17 @@ export function parseCSV(csvContent: string): ImportReport {
     }
 
     // 6. Member temporal checks (Sam joined mid-April)
-    if (date && splitDetails) {
-      const members = splitDetails.includes(':') 
-        ? splitDetails.split(',').map(p => p.split(':')[0].trim().toLowerCase())
-        : splitDetails.split(',').map(n => n.trim().toLowerCase());
+    if (date) {
+      let members: string[] = [];
+      if (splitType.toLowerCase().trim() === 'equal') {
+        members = splitWith.split(/[;,]/).map(n => n.trim().toLowerCase()).filter(Boolean);
+      } else if (splitDetails) {
+        const pairs = splitDetails.split(/[;,]/).map(p => p.trim()).filter(Boolean);
+        pairs.forEach(pair => {
+          const match = pair.match(/^([a-zA-Z\s]+)[:\s]+([\d.]+)/);
+          if (match) members.push(match[1].trim().toLowerCase());
+        });
+      }
       
       members.forEach(memberName => {
         const memberInfo = KNOWN_MEMBERS[memberName];
@@ -383,7 +507,7 @@ export function parseCSV(csvContent: string): ImportReport {
             rowNumber,
             type: 'MEMBER_BEFORE_JOIN',
             severity: 'error',
-            description: `"${normalizeName(memberName)}" is included in this expense dated ${date.toISOString().split('T')[0]}, but they joined on ${memberInfo.joinDate.toISOString().split('T')[0]}.`,
+            description: `"${normalizeName(memberName)}" is included in this expense dated ${formatDateLocal(date)}, but they joined on ${formatDateLocal(memberInfo.joinDate)}.`,
             field: 'Split Details',
             originalValue: memberName,
             suggestedValue: `Remove ${normalizeName(memberName)} from split`,
@@ -394,7 +518,7 @@ export function parseCSV(csvContent: string): ImportReport {
     }
 
     // 7. Duplicate check
-    const fingerprint = `${description.trim()}|${(paidBy || '').trim()}|${amountStr}|${dateStr}`;
+    const fingerprint = `${description.trim()}|${(paidBy || '').trim()}|${sanitizedAmountStr}|${dateStr}`;
     if (seenRows.has(fingerprint)) {
       const originalRow = seenRows.get(fingerprint)!;
       rowAnomalies.push({
@@ -413,7 +537,7 @@ export function parseCSV(csvContent: string): ImportReport {
 
     // Parse splits
     const validAmount = isNaN(amount) ? 0 : Math.abs(amount);
-    const splits = parseSplitDetails(splitType, splitDetails, validAmount);
+    const splits = parseSplitDetails(splitType, splitWith, splitDetails, validAmount);
 
     const parsed: ParsedExpense = {
       rowNumber,
@@ -424,7 +548,7 @@ export function parseCSV(csvContent: string): ImportReport {
       splits,
       totalAmount: validAmount,
       currency: normalizedCurrency === 'RS' ? 'INR' : normalizedCurrency,
-      group: group.trim() || 'Default',
+      group: groupStr.trim() || 'Default',
       anomalies: rowAnomalies,
       isValid: rowAnomalies.filter(a => a.severity === 'error').length === 0,
     };
@@ -433,8 +557,8 @@ export function parseCSV(csvContent: string): ImportReport {
     allAnomalies.push(...rowAnomalies);
   }
 
-  const validRows = parsedExpenses.filter(e => e.isValid).length;
   const anomalyRows = parsedExpenses.filter(e => e.anomalies.length > 0).length;
+  const validRows = parsedExpenses.length - anomalyRows;
 
   return {
     totalRows: parsedExpenses.length,
