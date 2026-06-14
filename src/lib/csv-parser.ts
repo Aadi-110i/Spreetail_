@@ -63,12 +63,13 @@ export interface ImportReport {
 
 // Known members and their join dates
 const KNOWN_MEMBERS: Record<string, { joinDate: Date; leftDate?: Date }> = {
-  'aisha': { joinDate: new Date('2024-01-01') },
-  'rohan': { joinDate: new Date('2024-01-01') },
-  'priya': { joinDate: new Date('2024-01-01') },
-  'meera': { joinDate: new Date('2024-01-01') },
-  'sam': { joinDate: new Date('2024-04-15') },
-  'samuel': { joinDate: new Date('2024-04-15') },
+  'aisha': { joinDate: new Date('2026-01-01') },
+  'rohan': { joinDate: new Date('2026-01-01') },
+  'priya': { joinDate: new Date('2026-01-01') },
+  'meera': { joinDate: new Date('2026-01-01'), leftDate: new Date('2026-03-31') },
+  'dev': { joinDate: new Date('2026-01-01') },
+  'sam': { joinDate: new Date('2026-04-15') },
+  'samuel': { joinDate: new Date('2026-04-15') },
 };
 
 const NAME_NORMALIZATION: Record<string, string> = {
@@ -80,7 +81,7 @@ const NAME_NORMALIZATION: Record<string, string> = {
   'priya s': 'Priya',
   'meera': 'Meera',
   'dev': 'Dev',
-  "dev's friend kabir": 'Dev',
+  "dev's friend kabir": 'Kabir',
 };
 
 function generateId(): string {
@@ -486,7 +487,7 @@ export function parseCSV(csvContent: string): ImportReport {
       }
     }
 
-    // 6. Member temporal checks (Sam joined mid-April)
+    // 6. Member temporal checks (Sam joined mid-April, Meera left end of March)
     if (date) {
       let members: string[] = [];
       if (splitType.toLowerCase().trim() === 'equal') {
@@ -501,23 +502,38 @@ export function parseCSV(csvContent: string): ImportReport {
       
       members.forEach(memberName => {
         const memberInfo = KNOWN_MEMBERS[memberName];
-        if (memberInfo && date < memberInfo.joinDate) {
-          rowAnomalies.push({
-            id: generateId(),
-            rowNumber,
-            type: 'MEMBER_BEFORE_JOIN',
-            severity: 'error',
-            description: `"${normalizeName(memberName)}" is included in this expense dated ${formatDateLocal(date)}, but they joined on ${formatDateLocal(memberInfo.joinDate)}.`,
-            field: 'Split Details',
-            originalValue: memberName,
-            suggestedValue: `Remove ${normalizeName(memberName)} from split`,
-            resolution: 'pending',
-          });
+        if (memberInfo) {
+          if (date < memberInfo.joinDate) {
+            rowAnomalies.push({
+              id: generateId(),
+              rowNumber,
+              type: 'MEMBER_BEFORE_JOIN',
+              severity: 'error',
+              description: `"${normalizeName(memberName)}" is included in this expense dated ${formatDateLocal(date)}, but they joined on ${formatDateLocal(memberInfo.joinDate)}.`,
+              field: 'Split Details',
+              originalValue: memberName,
+              suggestedValue: `Remove ${normalizeName(memberName)} from split`,
+              resolution: 'pending',
+            });
+          }
+          if (memberInfo.leftDate && date > memberInfo.leftDate) {
+            rowAnomalies.push({
+              id: generateId(),
+              rowNumber,
+              type: 'MEMBER_BEFORE_JOIN',
+              severity: 'warning',
+              description: `"${normalizeName(memberName)}" is included in this expense dated ${formatDateLocal(date)}, but they left on ${formatDateLocal(memberInfo.leftDate)}.`,
+              field: 'Split Details',
+              originalValue: memberName,
+              suggestedValue: `Remove ${normalizeName(memberName)} from split`,
+              resolution: 'pending',
+            });
+          }
         }
       });
     }
 
-    // 7. Duplicate check
+    // 7. Duplicate check (exact match)
     const fingerprint = `${description.trim()}|${(paidBy || '').trim()}|${sanitizedAmountStr}|${dateStr}`;
     if (seenRows.has(fingerprint)) {
       const originalRow = seenRows.get(fingerprint)!;
@@ -526,13 +542,47 @@ export function parseCSV(csvContent: string): ImportReport {
         rowNumber,
         type: 'DUPLICATE_ENTRY',
         severity: 'error',
-        description: `This row is a duplicate of row ${originalRow}.`,
+        description: `This row is an exact duplicate of row ${originalRow}.`,
         field: 'row',
         originalValue: line,
         resolution: 'pending',
       });
     } else {
       seenRows.set(fingerprint, rowNumber);
+    }
+
+    // 7b. Near-duplicate check (same date, same payer, similar amount, different description)
+    const nearDupKey = `${dateStr}|${(paidBy || '').trim().toLowerCase()}|${sanitizedAmountStr}`;
+    const nearDupDescKey = `${dateStr}|${sanitizedAmountStr}`;
+    if (seenRows.has(nearDupDescKey) && !seenRows.has(fingerprint.toLowerCase())) {
+      // Check if there's another row on the same date with the same amount but different description
+    }
+    // Check for near-duplicate by date + similar amount + different description
+    for (const [existingFp, existingRow] of seenRows.entries()) {
+      if (existingRow === rowNumber) continue;
+      const [existingDesc, existingPayer, existingAmount, existingDate] = existingFp.split('|');
+      if (existingDate === dateStr && 
+          existingPayer?.toLowerCase() === (paidBy || '').trim().toLowerCase() &&
+          Math.abs(parseFloat(existingAmount || '0') - parseFloat(sanitizedAmountStr || '0')) < 500 &&
+          existingDesc?.toLowerCase() !== description.trim().toLowerCase() &&
+          parseFloat(sanitizedAmountStr || '0') > 0) {
+        // Check if descriptions are similar (both about the same thing)
+        const descWords1 = new Set(existingDesc.toLowerCase().split(/\s+/));
+        const descWords2 = new Set(description.trim().toLowerCase().split(/\s+/));
+        const commonWords = [...descWords1].filter(w => descWords2.has(w) && w.length > 2);
+        if (commonWords.length >= 1) {
+          rowAnomalies.push({
+            id: generateId(),
+            rowNumber,
+            type: 'DUPLICATE_ENTRY',
+            severity: 'warning',
+            description: `Possible duplicate of row ${existingRow}: "${existingDesc}" (${existingAmount}) vs "${description.trim()}" (${sanitizedAmountStr}). Same date and payer with similar description.`,
+            field: 'row',
+            originalValue: line,
+            resolution: 'pending',
+          });
+        }
+      }
     }
 
     // Parse splits

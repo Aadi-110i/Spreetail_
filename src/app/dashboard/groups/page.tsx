@@ -7,7 +7,14 @@ export default async function GroupsPage() {
   const userId = await getSession();
   if (!userId) redirect('/login');
 
+  const memberships = await prisma.groupMember.findMany({
+    where: { userId, leftAt: null },
+    select: { groupId: true },
+  });
+  const userGroupIds = memberships.map(m => m.groupId);
+
   const groups = await prisma.group.findMany({
+    where: { id: { in: userGroupIds } },
     include: {
       _count: { select: { members: true, expenses: true } },
       members: { include: { user: true }, where: { leftAt: null } },
