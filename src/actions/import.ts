@@ -26,9 +26,20 @@ export async function commitImport(
   let imported = 0;
   let skipped = 0;
 
-  // Create or find the group
-  let group = await prisma.group.findFirst({ where: { name: 'Flat 4B' } });
-  if (!group) {
+  // 1. Create or find the group (scoped to user)
+  // Check if the user is already in a group named 'Flat 4B'
+  const existingMemberGroup = await prisma.groupMember.findFirst({
+    where: {
+      userId,
+      group: { name: 'Flat 4B' }
+    },
+    include: { group: true }
+  });
+
+  let group;
+  if (existingMemberGroup) {
+    group = existingMemberGroup.group;
+  } else {
     group = await prisma.group.create({
       data: { name: 'Flat 4B', description: 'Imported from CSV' },
     });
@@ -47,38 +58,123 @@ export async function commitImport(
     }
   }
 
-  // Ensure all members exist
+  // 2. Ensure all member names are collected
   const memberNames = new Set<string>();
   for (const expense of approvedExpenses) {
     memberNames.add(expense.paidBy);
     expense.splits.forEach(s => memberNames.add(s.name));
   }
 
-  const memberMap = new Map<string, string>(); // name -> userId
+  if (importingUser) {
+    memberNames.add(importingUser.name);
+  }
+
+  // 3. Find or create all users in batch
+  const memberEmails = new Set<string>();
+  const memberToEmailMap = new Map<string, string>(); // name -> email
+
   for (const name of memberNames) {
     if (name === 'Unknown') continue;
-    const email = `${name.toLowerCase()}@flat4b.com`;
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({ data: { name, email, password: DEFAULT_PASSWORD_HASH } });
+    let email = `${name.toLowerCase()}@flat4b.com`;
+    if (importingUser && importingUser.name.toLowerCase() === name.toLowerCase()) {
+      email = importingUser.email;
     }
-    memberMap.set(name, user.id);
+    memberEmails.add(email);
+    memberToEmailMap.set(name, email);
+  }
 
-    // Ensure group membership
-    const existing = await prisma.groupMember.findUnique({
-      where: { groupId_userId: { groupId: group.id, userId: user.id } },
-    });
-    if (!existing) {
-      // Sam joined mid-April
-      const joinDate = name === 'Sam' ? new Date('2024-04-15') : new Date('2024-01-01');
-      await prisma.groupMember.create({
-        data: { groupId: group.id, userId: user.id, joinedAt: joinDate },
+  const existingUsers = await prisma.user.findMany({
+    where: { email: { in: Array.from(memberEmails) } }
+  });
+
+  const userMap = new Map<string, string>(); // email -> userId
+  const nameToIdMap = new Map<string, string>(); // name -> userId
+
+  existingUsers.forEach(u => {
+    userMap.set(u.email, u.id);
+  });
+
+  const newUsersData: { name: string; email: string; password: string }[] = [];
+  for (const name of memberNames) {
+    if (name === 'Unknown') continue;
+    const email = memberToEmailMap.get(name)!;
+    if (!userMap.has(email)) {
+      newUsersData.push({
+        name,
+        email,
+        password: DEFAULT_PASSWORD_HASH
       });
     }
   }
 
+  if (newUsersData.length > 0) {
+    await prisma.user.createMany({
+      data: newUsersData
+    });
+    
+    // Re-fetch users to get their IDs
+    const allUsers = await prisma.user.findMany({
+      where: { email: { in: Array.from(memberEmails) } }
+    });
+    allUsers.forEach(u => {
+      userMap.set(u.email, u.id);
+    });
+  }
+
+  for (const name of memberNames) {
+    if (name === 'Unknown') continue;
+    const email = memberToEmailMap.get(name)!;
+    const id = userMap.get(email);
+    if (id) {
+      nameToIdMap.set(name, id);
+    }
+  }
+
+  // 4. Ensure group membership in batch
+  const existingMemberships = await prisma.groupMember.findMany({
+    where: { groupId: group.id }
+  });
+
+  const memberUserIdsInGroup = new Set(existingMemberships.map(gm => gm.userId));
+  const newMembershipsData: { groupId: string; userId: string; joinedAt: Date }[] = [];
+
+  for (const name of memberNames) {
+    if (name === 'Unknown') continue;
+    const memberUserId = nameToIdMap.get(name);
+    if (memberUserId && !memberUserIdsInGroup.has(memberUserId)) {
+      const joinDate = name === 'Sam' ? new Date('2024-04-15') : new Date('2024-01-01');
+      newMembershipsData.push({
+        groupId: group.id,
+        userId: memberUserId,
+        joinedAt: joinDate
+      });
+    }
+  }
+
+  if (newMembershipsData.length > 0) {
+    await prisma.groupMember.createMany({
+      data: newMembershipsData
+    });
+  }
+
+  // 5. Fetch existing expenses in group for duplicate checks
+  const existingExpenses = await prisma.expense.findMany({
+    where: { groupId: group.id }
+  });
+
+  const getFingerprint = (desc: string, amount: number, currency: string, date: Date, payerId: string) => {
+    return `${desc.trim().toLowerCase()}|${amount.toFixed(2)}|${currency.toUpperCase()}|${date.toDateString()}|${payerId}`;
+  };
+
+  const existingFingerprints = new Set(
+    existingExpenses.map(e => getFingerprint(e.description, e.amount, e.currency, e.date, e.payerId))
+  );
+
+  // 6. Filter and construct new expenses and splits in memory
+  const newExpensesToInsert: { id: string; groupId: string; description: string; amount: number; currency: string; date: Date; payerId: string }[] = [];
+  const newSplitsToInsert: { id: string; expenseId: string; userId: string; amount: number }[] = [];
+
   for (const expense of approvedExpenses) {
-    // Check if any blocking anomalies remain unresolved
     const hasBlockingAnomaly = expense.anomalies.some(a => {
       if (a.severity === 'error') {
         const resolution = anomalyResolutions[a.id];
@@ -87,10 +183,7 @@ export async function commitImport(
       return false;
     });
 
-    // Check if this expense was explicitly rejected
     const wasRejected = expense.anomalies.some(a => anomalyResolutions[a.id] === 'rejected');
-
-    // If duplicate entry anomaly is approved, it means "approve the deletion/skipping of this duplicate"
     const isApprovedDuplicateSkip = expense.anomalies.some(a => a.type === 'DUPLICATE_ENTRY' && anomalyResolutions[a.id] === 'approved');
 
     if (wasRejected || hasBlockingAnomaly || isApprovedDuplicateSkip) {
@@ -98,21 +191,18 @@ export async function commitImport(
       continue;
     }
 
-    // Apply approved suggested fixes (e.g., name normalizations, currency, dates)
     expense.anomalies.forEach(a => {
       if (anomalyResolutions[a.id] === 'approved' && a.suggestedValue) {
         if (a.type === 'INCONSISTENT_NAME' || a.type === 'WHITESPACE_IN_NAME' || a.type === 'UNKNOWN_MEMBER') {
           if (a.field === 'Paid By') {
             expense.paidBy = a.suggestedValue;
           }
-          // Update any split names that match the original incorrect value
           expense.splits.forEach(s => {
             if (s.name === a.originalValue) {
               s.name = a.suggestedValue!;
             }
           });
         } else if (a.type === 'MEMBER_BEFORE_JOIN') {
-          // If approved, remove the member from the split entirely
           expense.splits = expense.splits.filter(s => s.name !== a.originalValue);
         } else if (a.type === 'INVALID_CURRENCY') {
           expense.currency = a.suggestedValue;
@@ -127,55 +217,49 @@ export async function commitImport(
       }
     });
 
-    const payerId = memberMap.get(expense.paidBy);
+    const payerId = nameToIdMap.get(expense.paidBy);
     if (!payerId) {
       skipped++;
       continue;
     }
 
-    try {
-      // Check for duplicate before inserting
-      const existing = await prisma.expense.findFirst({
-        where: {
-          groupId: group.id,
-          description: expense.description,
-          amount: expense.totalAmount,
-          currency: expense.currency,
-          date: expense.date,
-          payerId,
-        },
-      });
-
-      if (existing) {
-        skipped++;
-        continue;
-      }
-
-      const splitData = expense.splits
-        .map(split => {
-          const splitUserId = memberMap.get(split.name);
-          return splitUserId ? { userId: splitUserId, amount: split.amount } : null;
-        })
-        .filter((s): s is NonNullable<typeof s> => s !== null);
-
-      await prisma.expense.create({
-        data: {
-          groupId: group.id,
-          description: expense.description,
-          amount: expense.totalAmount,
-          currency: expense.currency,
-          date: expense.date,
-          payerId,
-          splits: {
-            create: splitData,
-          },
-        },
-      });
-
-      imported++;
-    } catch {
+    const fp = getFingerprint(expense.description, expense.totalAmount, expense.currency, expense.date, payerId);
+    if (existingFingerprints.has(fp)) {
       skipped++;
+      continue;
     }
+
+    const expenseId = crypto.randomUUID();
+    newExpensesToInsert.push({
+      id: expenseId,
+      groupId: group.id,
+      description: expense.description,
+      amount: expense.totalAmount,
+      currency: expense.currency,
+      date: expense.date,
+      payerId,
+    });
+
+    expense.splits.forEach(split => {
+      const splitUserId = nameToIdMap.get(split.name);
+      if (splitUserId) {
+        newSplitsToInsert.push({
+          id: crypto.randomUUID(),
+          expenseId,
+          userId: splitUserId,
+          amount: split.amount
+        });
+      }
+    });
+
+    imported++;
+  }
+
+  if (newExpensesToInsert.length > 0) {
+    await prisma.$transaction([
+      prisma.expense.createMany({ data: newExpensesToInsert }),
+      prisma.expenseSplit.createMany({ data: newSplitsToInsert })
+    ]);
   }
 
   revalidatePath('/dashboard');

@@ -298,7 +298,7 @@ export default function ImportPage() {
             )}
 
             <div className="flex gap-2" style={{ justifyContent: 'center' }}>
-              <a href="/dashboard" className="btn btn-filled"><span>Dashboard</span></a>
+              <Link href="/dashboard" className="btn btn-filled"><span>Dashboard</span></Link>
               <button className="btn" onClick={() => { setStep('upload'); setReport(null); setResult(null); setResolutions({}); }}>
                 <span>Import Another</span>
               </button>
