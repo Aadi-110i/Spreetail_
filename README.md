@@ -13,32 +13,31 @@ This project was developed in collaboration with Gemini, an AI pair programming 
 ### Prerequisites
 - Node.js v18+
 - npm
+- A Supabase PostgreSQL Database
 
 ### Installation & Launch
 ```bash
 # 1. Clone the repository
-git clone <repo-url>
-cd spreetailassignment
+git clone https://github.com/Aadi-110i/Spreetail_.git
+cd Spreetail_
 
 # 2. Install dependencies
 npm install
 
-# 3. Initialize the database (SQLite)
-# This will create the local dev.db file and generate the Prisma client
-npx prisma db push
-npx prisma generate
+# 3. Configure Environment Variables
+# Create a .env file in the root with your Supabase credentials:
+# DATABASE_URL="postgresql://postgres.[REF]:[PASS]@aws-1-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
+# DIRECT_URL="postgresql://postgres.[REF]:[PASS]@aws-1-[REGION].pooler.supabase.com:5432/postgres"
 
-# 4. Start the development server
+# 4. Initialize the Database
+# This will push the schema to Supabase and generate the Prisma client
+npx prisma db push --accept-data-loss
+
+# 5. Start the development server
 npm run dev
 ```
 
 Visit `http://localhost:3000` to begin.
-
-### Environment Variables
-Create a `.env` file in the root if it doesn't exist:
-```
-DATABASE_URL="file:./dev.db"
-```
 
 ##  Core Experience
 - **Intelligent Import** — Advanced CSV parser with 12+ automated anomaly detection rules.
@@ -48,7 +47,7 @@ DATABASE_URL="file:./dev.db"
 
 ##  Tech Stack
 - **Framework** — Next.js 16 (App Router)
-- **Database** — Prisma + SQLite
+- **Database** — PostgreSQL (Hosted on Supabase) + Prisma ORM
 - **Styling** — Vanilla CSS (Custom Design System)
 - **Language** — TypeScript
 
