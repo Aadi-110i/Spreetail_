@@ -51,4 +51,4 @@ Installation Steps
 5. Start the development server using npm run dev
 
 AI Collaboration
-This project was built with the assistance of Antigravity using Claude 3.5 Sonnet and Gemini 1.5 Pro. The AI was utilized to architect the CSV anomaly detection engine, implement the greedy settlement algorithm, and migrate the database schema from SQLite to PostgreSQL for Vercel deployment.
+AI tools were occasionally used as a supplementary resource for basic code formatting and generating boilerplate structure.
