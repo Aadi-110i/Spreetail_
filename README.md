@@ -1,36 +1,25 @@
-# Premium Split
+Premium Split
 
-A high-fidelity expense management platform built for modern flatmates.
+This is an expense management application for flatmates.
 
-## Setup Instructions
+Setup Instructions:
+Prerequisites are Node.js v18+, npm, and a Supabase PostgreSQL Database.
 
-**Prerequisites:** Node.js v18+, npm, and a Supabase PostgreSQL Database.
+1. Clone the repository using git clone https://github.com/Aadi-110i/Spreetail_.git
+2. Navigate into the folder using cd Spreetail_
+3. Run npm install to install dependencies.
+4. Create a .env file and add your Supabase credentials:
+DATABASE_URL=postgresql://...:6543/postgres?pgbouncer=true
+DIRECT_URL=postgresql://...:5432/postgres
+5. Run npx prisma db push --accept-data-loss to initialize the database.
+6. Run npm run dev to start the server.
+7. Open http://localhost:3000 in your browser.
 
-```bash
-# Clone and install
-git clone https://github.com/Aadi-110i/Spreetail_.git
-cd Spreetail_
-npm install
+Tech Stack:
+Framework: Next.js 16
+Database: PostgreSQL on Supabase with Prisma
+Language: TypeScript
+Styling: Vanilla CSS
 
-# Configure environment
-# Create a .env file with your Supabase credentials:
-# DATABASE_URL="postgresql://...:6543/postgres?pgbouncer=true"
-# DIRECT_URL="postgresql://...:5432/postgres"
-
-# Initialize database and run
-npx prisma db push --accept-data-loss
-npm run dev
-```
-
-The application will be available at `http://localhost:3000`.
-
-## Tech Stack
-
-- **Framework:** Next.js 16 (App Router)
-- **Database:** PostgreSQL (Supabase) + Prisma ORM
-- **Language:** TypeScript
-- **Styling:** Custom Vanilla CSS Design System
-
-## AI Collaboration
-
-This application was developed in collaboration with **Antigravity (Claude 3.5 Sonnet & Gemini 1.5 Pro)**. AI was utilized for architectural scaffolding, implementing the CSV anomaly detection engine, and generating the core design system.
+AI Used:
+This application was built with the assistance of Antigravity using Claude 3.5 Sonnet and Gemini 1.5 Pro. The AI helped write the code for the anomaly detection logic and the user interface.
